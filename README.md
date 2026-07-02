@@ -1,5 +1,7 @@
 # HybridOS — Transient RAM Architecture & Distributed Storage
 
+<video src="img/demo.webm" width="100%" controls autoplay loop muted></video>
+
 Este script em Bash automatiza a inicialização de um ambiente de desenvolvimento e operação persistente, rodando 100% na memória RAM através de uma sessão Linux Live. O ecossistema transforma um dispositivo Android (via SSHFS) em armazenamento físico persistente e o Google Drive (via Rclone) em um córtex de backup assíncrono em nuvem.
 
 ## 🛠️ Tecnologias e Protocolos
