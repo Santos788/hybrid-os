@@ -8,9 +8,13 @@ Um ambiente de desenvolvimento portátil, agnóstico e de alta performance, proj
 O **HybridOS** elimina a volatilidade e a falta de persistência de ambientes *Live CD/USB*. Ele transforma seu smartphone (via Termux) em um "SSD Remoto" seguro via barramento USB, monta partições em cache na RAM do host, sincroniza automações na nuvem e sobe qualquer IDE ou ferramenta sem tocar ou gravar no disco físico da máquina.
 
 [+] Host: Linux Mint (RAM Live)
+
 [+] Core: Android via Termux (USB)
+
 [+] Storage: SSHFS Persistent
+
 [+] Cloud: Rclone + Google Drive
+
 [+] IDE/Launcher: Dynamic Menu (.AppImage)
 
 
