@@ -5,14 +5,13 @@ Um ambiente de desenvolvimento portátil, persistente e seguro, projetado para r
 ---
 
 ## 💡 O Conceito
-O **HybridOS** resolve o problema de trabalhar em ambientes *Live CD/USB*. Ele transforma seu celular (via Termux) em um "SSD Remoto" criptografado e seguro, monta partições em cache na RAM do host, sincroniza automações na nuvem e sobe o ambiente de código isolado de escrita em disco físico.
+O **HybridOS** resolve o problema de trabalhar em ambientes *Live CD/USB*. Ele transforma seu celular (via Termux) em um "SSD Remoto" criptografado e seguro, monta partições em cache na RAM do host, sincroniza automações na nuvem e sobe o ambiente de código isolado de escrita em disco físico
 
-    .MMMMMMMMMMMMMMMMMMMMMMMMM.
-  .MMm----------------------mMM.     [+] Host: Linux Mint (RAM Live)
- .MM-  .MMMMMMMMMMMMMMMMMMM.  -MM.   [+] Core: Android via Termux (USB)
- MM-  .MMMMMMMMMMMMMMMMMMMMM.  -MM   [+] Storage: SSHFS Persistent
-MM-  .MM   MMMMMMM   MMMMMM.   -MM   [+] Cloud: Rclone + Google Drive
-    MMMMMMMMMMMMMMMMMMMMMMMMMMMMM    [+] IDE: VS Code (.AppImage na RAM)
+[+] Host: Linux Mint (RAM Live)
+[+] Core: Android via Termux (USB)
+[+] Storage: SSHFS Persistent
+[+] Cloud: Rclone + Google Drive
+[+] IDE: VS Code (.AppImage na RAM)
 
 
 ---
