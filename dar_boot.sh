@@ -24,7 +24,7 @@ echo "      MM-  .MM   MMMMMMMMMMMMMMMMM.  -MM"
 echo "      MM-  .MM   MMMMMMMMMMMMMMMMM.  -MM"
 echo "      MM-  .MMMMMMMMMMMMMMMMMMMMMMM.  -MM"
 echo "       MM-  .MMMMMMMMMMMMMMMMMMMMM.  -MM"
-echo "       MM.    -MMMMMMMMMMMMMMMMM-    .MM"
+echo "       MM.     -MMMMMMMMMMMMMMMMM-     .MM"
 echo "        MMm.                       .mMM"
 echo "          MMMMMMMMMMMMMMMMMMMMMMMMMMMMM"
 echo -e "${NC}"
@@ -37,10 +37,33 @@ log_ok()   { echo -e "${LGREEN}   [  OK  ]${NC} $1"; }
 log_info() { echo -e "${YELLOW}   [ INFO ]${NC} $1"; }
 log_fail() { echo -e "${RED}   [ FAIL ]${NC} $1"; }
 
-mkdir -p ~/meu_ssd_remoto
+# Identifica o IP do celular dinamicamente
 CELULAR_IP=$(ip route show | grep default | awk '{print $3}' | head -n 1)
 [ -z "$CELULAR_IP" ] && CELULAR_IP="192.168.141.218"
 
+# --- NOVO BLOCO AUTOMAÇÃO GOOGLE DRIVE ---
+log_task "Configurando o Google Drive na RAM..."
+mkdir -p ~/.config/rclone
+
+# Puxa o rclone.conf direto da raiz do celular usando o IP dinâmico
+scp -P 8022 com.termux@$CELULAR_IP:/storage/emulated/0/rclone.conf ~/.config/rclone/rclone.conf 2>/dev/null
+
+if [ $? -eq 0 ]; then
+    mkdir -p ~/meu_google_drive
+    # Monta usando o nome correto gdrive:
+    rclone mount gdrive: ~/meu_google_drive --config ~/.config/rclone/rclone.conf --vfs-cache-mode full &
+    log_ok "Google Drive (gdrive:) montado em ~/meu_google_drive"
+else
+    log_fail "Não foi possível puxar o arquivo rclone.conf do celular."
+fi
+# -----------------------------------------
+
+# Correção preventiva para o FUSE (permite o VS Code rodar isolado)
+if ! grep -q "user_allow_other" /etc/fuse.conf 2>/dev/null; then
+    echo "user_allow_other" | sudo tee -a /etc/fuse.conf > /dev/null
+fi
+
+mkdir -p ~/meu_ssd_remoto
 if ! mountpoint -q ~/meu_ssd_remoto; then
     sshfs -p 8022 com.termux@$CELULAR_IP:/storage/emulated/0 ~/meu_ssd_remoto -o follow_symlinks,cache=yes,allow_other
 fi
@@ -56,7 +79,7 @@ fi
 echo -e "\n${LCYAN}${BOLD}   --- APLICATIVOS DISPONÍVEIS NO HYBRIDOS ---${NC}"
 for i in "${!APPS_LIST[@]}"; do
     APP_NAME=$(basename "${APPS_LIST[$i]}")
-    echo -e "    [ $i ] $APP_NAME"
+    echo -e "     [ $i ] $APP_NAME"
 done
 echo ""
 
@@ -75,4 +98,5 @@ log_info "Carregando $SELECTED_NAME na memória RAM..."
 cp "$SELECTED_PATH" /tmp/hybrid_app.AppImage
 chmod +x /tmp/hybrid_app.AppImage
 
+log_ok "Iniciando $SELECTED_NAME... Sistema operacional limpo e seguro!"
 /tmp/hybrid_app.AppImage --no-sandbox --disable-gpu --disable-software-rasterizer --user-data-dir ~/meu_ssd_remoto/vscode_data &
