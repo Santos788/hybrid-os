@@ -2,6 +2,7 @@
 # ==============================================================================
 # HybridOS - Ambiente de Desenvolvimento Persistente em RAM via Android (Termux)
 # Desenvolvedor: Clayton (Santos788)
+# Versão: 2.0 (Menu Dinâmico de AppImages)
 # ==============================================================================
 
 # ---------- Paleta de cores (estilo Mint / terminal hacker) ----------
@@ -39,15 +40,15 @@ echo -e "${NC}"
 echo -e "${LCYAN}${BOLD}   Bem-vindo ao HybridOS${NC}"
 echo -e "${GRAY}   ---------------------------------------------------------------${NC}"
 echo -e "${CYAN}   HybridOS${NC} monta seu celular via SSHFS, sincroniza o Google Drive"
-echo -e "   com rclone e sobe o VS Code direto na RAM, sem gravar no disco Live."
+echo -e "   com rclone e sobe aplicativos direto na RAM, sem gravar no disco Live."
 echo -e "${GRAY}   ---------------------------------------------------------------${NC}"
 echo ""
 
-# ---------- Caixa de status inicial (estilo Copilot CLI) ----------
+# ---------- Caixa de status inicial ----------
 echo -e "${GRAY}┌──────────────────────────────────────────────────────────────┐${NC}"
 echo -e "${GRAY}│${NC} ${LGREEN}●${NC} Script      : HybridOS RAM Environment                     ${GRAY}│${NC}"
 echo -e "${GRAY}│${NC} ${LGREEN}●${NC} Dev         : Clayton (Santos788)                          ${GRAY}│${NC}"
-echo -e "${GRAY}│${NC} ${LGREEN}●${NC} Módulos     : SSHFS · Rclone · Tmpfs · Autoload AppImage   ${GRAY}│${NC}"
+echo -e "${GRAY}│${NC} ${LGREEN}●${NC} Módulos     : SSHFS · Rclone · Tmpfs · Dynamic Launcher    ${GRAY}│${NC}"
 echo -e "${GRAY}└──────────────────────────────────────────────────────────────┘${NC}"
 echo ""
 
@@ -58,11 +59,10 @@ log_info() { echo -e "${YELLOW}   [ INFO ]${NC} $1"; }
 log_warn() { echo -e "${YELLOW}   [ WARN ]${NC} $1"; }
 log_fail() { echo -e "${RED}   [ FAIL ]${NC} $1"; }
 
-# [ETAPA 1] Limpeza preventiva de CD-ROM e saneamento de dependências
+# [ETAPA 1] Saneamento de dependências do Kernel do Linux Live
 log_task "Saneando dependências do Kernel do Linux Live..."
 sudo sed -i '/cdrom:/d' /etc/apt/sources.list /etc/apt/sources.list.d/* 2>/dev/null
 
-# Habilita a opção user_allow_other no FUSE do sistema operacional local
 if [ -f /etc/fuse.conf ]; then
     sudo sed -i 's/#\s*user_allow_other/user_allow_other/g' /etc/fuse.conf
     if ! grep -q "^user_allow_other" /etc/fuse.conf; then
@@ -72,7 +72,6 @@ fi
 
 if ! command -v sshfs &>/dev/null || ! command -v rclone &>/dev/null; then
     log_info "Dependências ausentes detectadas: [ sshfs rclone ]"
-    log_info "Iniciando instalação automatizada via pacotes estáveis..."
     sudo apt-get update -y && sudo apt-get install -y sshfs rclone
     if [ $? -ne 0 ]; then
         log_fail "Falha crítica ao instalar dependências. Verifique sua internet."
@@ -102,7 +101,7 @@ if [ $? -ne 0 ]; then
 fi
 log_ok "Fusão concluída — Armazenamento do itel A70 agora é local."
 
-# [ETAPA 5] Automação Inteligente do Rclone (Google Drive)
+# [ETAPA 5] Automação do Rclone (Google Drive)
 log_task "Conectando córtex externo (Google Drive)..."
 if [ -f ~/meu_ssd_remoto/rclone.conf ]; then
     cp ~/meu_ssd_remoto/rclone.conf ~/.config/rclone/rclone.conf
@@ -110,25 +109,43 @@ if [ -f ~/meu_ssd_remoto/rclone.conf ]; then
     log_ok "Google Drive montado com sucesso via cache persistente do celular!"
 else
     log_warn "Arquivo 'rclone.conf' não encontrado na raiz do celular."
-    echo -e "            Execute 'rclone config' e depois salve o arquivo no celular."
 fi
 
-# [ETAPA 6] Carregamento e Execução do VS Code na RAM (Sem erro de GPU e Sandbox)
+# [ETAPA 6] Varredura e Menu Dinâmico de Aplicativos (.AppImage)
 log_task "Escaneando celular por interfaces portáteis (.AppImage)..."
-# Filtro injetado para ignorar pastas restritas do Android e suprimir erros de leitura
-VSCODE_APPIMAGE=$(find ~/meu_ssd_remoto -path "*/Android" -prune -o -name "*.AppImage" -print | head -n 1)
+mapfile -t APPS_LIST < <(find ~/meu_ssd_remoto -path "*/Android" -prune -o -name "*.AppImage" -print)
 
-if [ -n "$VSCODE_APPIMAGE" ]; then
-    cp "$VSCODE_APPIMAGE" /tmp/vscode.AppImage
-    chmod +x /tmp/vscode.AppImage
-    log_ok "VS Code carregado com sucesso na RAM! 100%"
-    echo ""
-    echo -e "${GREEN}   ────────────────────────────────────────────────────────────${NC}"
-    echo -e "   ${LGREEN}●${NC} ${BOLD}HybridOS ONLINE${NC} — Ambiente pronto e protegido!"
-    echo -e "${GREEN}   ────────────────────────────────────────────────────────────${NC}"
-
-    # Execução otimizada: sem aceleração de software, sem sandbox e sem crash gráfico
-    /tmp/vscode.AppImage --no-sandbox --disable-gpu --disable-software-rasterizer --user-data-dir ~/meu_ssd_remoto/vscode_data &
-else
-    log_fail "Nenhum arquivo .AppImage encontrado no celular."
+if [ ${#APPS_LIST[@]} -eq 0 ]; then
+    log_fail "Nenhum arquivo .AppImage encontrado no armazenamento do celular."
+    exit 1
 fi
+
+echo -e "\n${LCYAN}${BOLD}   --- APLICATIVOS DISPONÍVEIS NO HYBRIDOS ---${NC}"
+for i in "${!APPS_LIST[@]}"; do
+    APP_NAME=$(basename "${APPS_LIST[$i]}")
+    echo -e "    [ $i ] $APP_NAME"
+done
+echo ""
+
+while true; do
+    read -p "   Escolha o número do app que deseja rodar na RAM: " OPTION
+    if [[ "$OPTION" =~ ^[0-9]+$ ]] && [ "$OPTION" -lt "${#APPS_LIST[@]}" ]; then
+        SELECTED_PATH="${APPS_LIST[$OPTION]}"
+        SELECTED_NAME=$(basename "$SELECTED_PATH")
+        break
+    else
+        echo -e "   ${RED}Opção inválida! Digite um número da lista.${NC}"
+    fi
+done
+
+log_info "Carregando $SELECTED_NAME na memória RAM... 100%"
+cp "$SELECTED_PATH" /tmp/hybrid_app.AppImage
+chmod +x /tmp/hybrid_app.AppImage
+
+echo ""
+echo -e "${GREEN}   ────────────────────────────────────────────────────────────${NC}"
+echo -e "   ${LGREEN}●${NC} ${BOLD}HybridOS ONLINE${NC} — Executando $SELECTED_NAME protegido!"
+echo -e "${GREEN}   ────────────────────────────────────────────────────────────${NC}"
+
+# Inicialização com flags anti-crash de GPU e Sandbox prontas para qualquer AppImage
+/tmp/hybrid_app.AppImage --no-sandbox --disable-gpu --disable-software-rasterizer --user-data-dir ~/meu_ssd_remoto/vscode_data &
