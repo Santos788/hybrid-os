@@ -1,54 +1,62 @@
-# HybridOS 🚀
+# HybridOS V2 🚀
 
-Um ambiente de desenvolvimento portátil, persistente e seguro, projetado para rodar **100% na memória RAM (Linux Live)** utilizando o armazenamento de um dispositivo Android como core persistente.
+Um ambiente de desenvolvimento portátil, agnóstico e de alta performance, projetado para rodar **100% na memória RAM (Linux Live)**, utilizando o armazenamento de um dispositivo Android como core persistente e criptografado.
 
 ---
 
 ## 💡 O Conceito
-O **HybridOS** resolve o problema de trabalhar em ambientes *Live CD/USB*. Ele transforma seu celular (via Termux) em um "SSD Remoto" criptografado e seguro, monta partições em cache na RAM do host, sincroniza automações na nuvem e sobe o ambiente de código isolado de escrita em disco físico
+O **HybridOS** elimina a volatilidade e a falta de persistência de ambientes *Live CD/USB*. Ele transforma seu smartphone (via Termux) em um "SSD Remoto" seguro via barramento USB, monta partições em cache na RAM do host, sincroniza automações na nuvem e sobe qualquer IDE ou ferramenta sem tocar ou gravar no disco físico da máquina.
 
-[+] Host: Linux Mint (RAM Live)
-[+] Core: Android via Termux (USB)
-[+] Storage: SSHFS Persistent
-[+] Cloud: Rclone + Google Drive
-[+] IDE: VS Code (.AppImage na RAM)
+      .MMMMMMMMMMMMMMMMMMMMMMMMM.
+    .MMm----------------------mMM.
+   .MM-  .MMMMMMMMMMMMMMMMMMM.  -MM.   [+] Host: Linux Mint (RAM Live)
+   MM-  .MMMMMMMMMMMMMMMMMMMMM.  -MM   [+] Core: Android via Termux (USB)
+  MM-  .MM   MMMMMMMMMMMMMMMMM.  -MM   [+] Storage: SSHFS Persistent
+  MM-  .MM   MMMMMMM   MMMMMM.   -MM   [+] Cloud: Rclone + Google Drive
+  MM-  .MM   MMMMMMM   MMMMMM.   -MM   [+] IDE/Launcher: Dynamic Menu (.AppImage)
+  MM-  .MM   MMMMMMM   MMMMMM.   -MM
+  MM-  .MM   MMMMMMMMMMMMMMMMM.  -MM
+  MM-  .MM   MMMMMMMMMMMMMMMMM.  -MM
+  MM-  .MMMMMMMMMMMMMMMMMMMMMMM.  -MM
+   MM-  .MMMMMMMMMMMMMMMMMMMMM.  -MM
+   MM.    -MMMMMMMMMMMMMMMMM-    .MM
+    MMm.                       .mMM
+      MMMMMMMMMMMMMMMMMMMMMMMMM
 
 
 ---
 
-## 🛠️ Funcionalidades & Arquitetura
-* **Fusão Securitária (SSHFS):** Montagem direta do sistema de arquivos do Android via barramento USB com bypass de permissões FUSE (`user_allow_other`).
-* **Córtex Externo (Rclone):** Integração automática com o Google Drive utilizando arquivos de configuração persistidos de forma segura no dispositivo móvel.
-* **Isolamento de Cache RAM:** O VS Code é carregado e executado direto no diretório `/tmp/` com persistência de dados do usuário (`vscode_data`) direcionada de volta ao celular.
-* **Bypass de Hardware Antigo:** Otimizado com flags do Chromium (`--no-sandbox`, `--disable-gpu`, `--disable-software-rasterizer`) eliminando falhas de renderização gráfica e travamentos em arquiteturas legadas (como Intel Haswell).
+## 🛠️ Novas Funcionalidades & Arquitetura (V2)
+* **Launcher Dinâmico via Menu:** O script faz uma varredura automática no armazenamento do Android e monta um menu seletor numérico no terminal. Permite escolher e carregar instantaneamente **qualquer aplicativo `.AppImage`** (VS Code, Postman, DBeaver, Insomnia) direto na RAM do host.
+* **Fusão Securitária (SSHFS):** Montagem do sistema de arquivos mobile via barramento USB com bypass de permissões FUSE (`user_allow_other`) injetado direto em `/etc/fuse.conf` a cada boot.
+* **Córtex Externo (Rclone):** Integração automatizada com o Google Drive, espelhando configurações e arquivos guardados no dispositivo móvel de forma volátil.
+* **Bypass Gráfico (Intel Haswell):** Otimizações em nível de Kernel e flags do Chromium (`--no-sandbox`, `--disable-gpu`, `--disable-software-rasterizer`) eliminando travamentos gráficos e gargalos em hardwares legados.
 
 ---
 
-## 🌍 Portabilidade & Requisitos (Para Outros Utilizadores)
-
-O script foi desenhado para ser agnóstico no lado do PC host (instalando dependências e configurando o FUSE automaticamente), mas o utilizador precisa de garantir os seguintes pré-requisitos no seu dispositivo Android:
-
-1. **Termux configurado** com acesso ao armazenamento interno (`termux-setup-storage`).
+## 🌍 Portabilidade & Pré-requisitos
+O script configura o computador host completamente do zero automaticamente, exigindo apenas as seguintes definições no dispositivo Android:
+1. **Termux configurado** com acesso ao armazenamento (`termux-setup-storage`).
 2. **Servidor SSH ativo** rodando no Termux (`sshd` na porta `8022`).
-3. **Ancoragem USB (Tethering USB)** ativa entre o telemóvel e o computador.
-4. O script `dar_boot.sh` guardado no armazenamento interno do Android respeitando a estrutura do repositório.
+3. **Ancoragem USB (Tethering)** ativa entre o celular e o computador.
+4. O script `dar_boot.sh` localizado na pasta raiz do repositório no celular.
 
 ---
 
 ## 🚀 Como Executar
 
-Para dar o boot completo na infraestrutura a partir de uma nova sessão RAM, utilize o comando adaptando o IP para o gateway do seu dispositivo:
+Para iniciar o ecossistema completo em uma nova sessão RAM limpa, utilize o comando único:
 
 ```bash
 ssh -p 8022 com.termux@192.168.141.218 "cat /storage/emulated/0/hybrid-os/dar_boot.sh" > /tmp/boot.sh && bash /tmp/boot.sh
 
 ⚡ Dica de Produtividade
 
-Crie um atalho prático (alias) no terminal do seu ambiente local:
+Crie um atalho prático (alias) no terminal do ambiente local para não precisar decorar o comando:
 Bash
 
 alias hyb='ssh -p 8022 com.termux@192.168.141.218 "cat /storage/emulated/0/hybrid-os/dar_boot.sh" > /tmp/boot.sh && bash /tmp/boot.sh'
 
-Agora basta digitar hyb para colocar todo o ecossistema de pé!
+Depois, basta digitar apenas hyb para colocar toda a infraestrutura de pé!
 
 Developed by Clayton (Santos788) 💻
