@@ -39,7 +39,7 @@ case $opcao in
         mkdir -p ~/hybrid-os ~/meu_google_drive                         
         
         # 🔒 Usa a chave copiada pelo preparar_e_rodar.sh para logar direto sem senha
-        rclone mount :sftp: ~/hybrid-os --sftp-host="$IP_ALVO" --sftp-port=8022 --sftp-user="$USER_ALVO" --sftp-key-file="$HOME/.ssh/id_rsa" --allow-other --vfs-cache-mode full 2>/dev/null &
+        rclone mount :sftp: ~/hybrid-os --sftp-host="$IP_ALVO" --sftp-root="/storage/emulated/0/hybrid-os" --sftp-port=8022 --sftp-user="$USER_ALVO" --sftp-key-file="$HOME/.ssh/id_rsa" --allow-other --vfs-cache-mode full 2>/dev/null &
         
         # Inicialização do Google Drive
         rclone mount gdrive: ~/meu_google_drive --allow-other --vfs-cache-mode full &
@@ -50,7 +50,7 @@ case $opcao in
         echo -e "${VERDE}[+] Montando apenas repositório via SFTP...${SEM_COR}"
         mkdir -p ~/hybrid-os
 
-        rclone mount :sftp: ~/hybrid-os --sftp-host="$IP_ALVO" --sftp-port=8022 --sftp-user="$USER_ALVO" --sftp-key-file="$HOME/.ssh/id_rsa" --allow-other --vfs-cache-mode full 2>/dev/null &
+        rclone mount :sftp: ~/hybrid-os --sftp-host="$IP_ALVO" --sftp-root="/storage/emulated/0/hybrid-os" --sftp-port=8022 --sftp-user="$USER_ALVO" --sftp-key-file="$HOME/.ssh/id_rsa" --allow-other --vfs-cache-mode full 2>/dev/null &
         
         echo -e "${VERDE}[OK] Pasta de projetos ativa em ~/hybrid-os!${SEM_COR}"
         ;;
