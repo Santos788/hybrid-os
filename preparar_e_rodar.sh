@@ -7,10 +7,10 @@ sudo sed -i '/user_allow_other/d' /etc/fuse.conf 2>/dev/null
 echo "user_allow_other" | sudo tee -a /etc/fuse.conf > /dev/null
 
 # 2. Desmonta qualquer processo órfão ou fantasma preso na RAM
+sudo umount -f ~/hybrid-os 2>/dev/null
 sudo umount -f ~/meu_google_drive 2>/dev/null
-sudo umount -f ~/meu_ssd_remoto 2>/dev/null
+fusermount -uz ~/hybrid-os 2>/dev/null
 fusermount -uz ~/meu_google_drive 2>/dev/null
-fusermount -uz ~/meu_ssd_remoto 2>/dev/null
 
 # 3. Instala as dependências se elas não existirem na RAM do Live CD
 if ! command -v rclone &> /dev/null || ! command -v sshfs &> /dev/null; then
@@ -18,7 +18,11 @@ if ! command -v rclone &> /dev/null || ! command -v sshfs &> /dev/null; then
     sudo apt update -y && sudo apt install rclone sshfs -y >/dev/null 2>&1
 fi
 
-echo -e "\033[0;32m[ OK ] Notebook pronto! Puxando ecossistema do celular...\033[0m"
+# 🌟 NOVO: Cria a pasta do rclone no notebook e puxa a configuração salva no celular
+mkdir -p ~/.config/rclone
+ssh -p 8022 com.termux@192.168.141.218 "cat /storage/emulated/0/hybrid-os/rclone.conf" > ~/.config/rclone/rclone.conf 2>/dev/null
+
+echo -e "\033[0;32m[ OK ] Configurações injetadas! Puxando ecossistema do celular...\033[0m"
 sleep 1
 
 # 4. Puxa e executa o boot oficial armazenado no celular
