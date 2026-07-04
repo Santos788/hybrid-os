@@ -27,7 +27,7 @@ echo -e "${CIANO}|${SEM_COR} OPTION ${CIANO}|${SEM_COR}               DESCRIPTIO
 echo -e "${CIANO}+========================================================+${SEM_COR}"
 echo -e "${CIANO}|${SEM_COR}   1    ${CIANO}|${SEM_COR} - Montar ambiente completo + Iniciar VS Code  ${CIANO}|${SEM_COR}"
 echo -e "${CIANO}|${SEM_COR}   2    ${CIANO}|${SEM_COR} - Montar apenas armazenamento do Celular        ${CIANO}|${SEM_COR}"
-echo -e "${CIANO}|${SEM_COR}   3    ${CIANO}|${SEM_COR} - Desmontar e sair com segurança                ${CIANO}|${SEM_COR}"
+echo -e "${CIANO}|${SEM_COR}   3    ${CIANO}|${SEM_COR} - Desmontar e SALVAR EXTENSÕES com segurança   ${CIANO}|${SEM_COR}"
 echo -e "${CIANO}+========================================================+${SEM_COR}"
 echo ""
 
@@ -47,15 +47,21 @@ case $opcao in
         echo -e "${CIANO}[+] Preparando VS Code Otimizado na RAM...${SEM_COR}"
         cd /tmp
         if [ ! -d "VSCode-linux-x64" ]; then
-            echo -e "${AMARELO}[...] Baixando estrutura do editor (Apenas no primeiro boot)...${SEM_COR}"
+            echo -e "${AMARELO}[...] Baixando estrutura do editor...${SEM_COR}"
             wget -q --show-progress -O vscode.tar.gz "https://code.visualstudio.com/sha/download?build=stable&os=linux-x64"
             tar -xzf vscode.tar.gz
             rm -f vscode.tar.gz
         fi
         
+        # RESTAURA EXTENSÕES SE HOUVER BACKUP NO CELULAR
+        if [ -f "~/hybrid-os/.vscode_backup.tar.gz" ]; then
+            echo -e "${CIANO}[+] Restaurando suas extensões salvadas...${SEM_COR}"
+            tar -xzf ~/hybrid-os/.vscode_backup.tar.gz -C ~/ 2>/dev/null
+        fi
+        
         echo -e "${VERDE}[OK] Disparando VS Code Fluido! Bons estudos de ADS!${SEM_COR}"
-        # Abre o VS Code apontando direto para a pasta do seu projeto e rodando liso
-        ./VSCode-linux-x64/code ~/hybrid-os --extensions-dir ~/hybrid-os/.vscode_ext --user-data-dir ~/hybrid-os/.vscode_data --no-sandbox --disable-gpu --disable-software-rasterizer &> /dev/null &
+        # Roda usando a pasta nativa da RAM, sem travar no Android
+        ./VSCode-linux-x64/code ~/hybrid-os --no-sandbox --disable-gpu --disable-software-rasterizer &> /dev/null &
         ;;
     2)
         echo -e "${VERDE}[+] Montando apenas repositório via SFTP...${SEM_COR}"
@@ -64,13 +70,22 @@ case $opcao in
         echo -e "${VERDE}[OK] Pasta de projetos ativa em ~/hybrid-os!${SEM_COR}"
         ;;
     3)
-        echo -e "${AMARELO}[-] Desmontando e limpando ambiente...${SEM_COR}"
+        echo -e "${AMARELO}[-] Fazendo backup das extensões e configurações na RAM...${SEM_COR}"
+        pkill -f code
+        sleep 1
+        # Compacta a pasta de extensões da RAM direto para o celular
+        if [ -d "~/.vscode" ] || [ -d "~/.config/Code" ]; then
+            tar -czf /tmp/vscode_backup.tar.gz -C ~/ .vscode .config/Code 2>/dev/null
+            cp /tmp/vscode_backup.tar.gz ~/hybrid-os/.vscode_backup.tar.gz 2>/dev/null
+            echo -e "${VERDE}[OK] Extensões salvas com sucesso no celular!${SEM_COR}"
+        fi
+
+        echo -e "${AMARELO}[-] Desmontando unidades...${SEM_COR}"
         sudo umount -f ~/hybrid-os 2>/dev/null
         sudo umount -f ~/meu_google_drive 2>/dev/null
         fusermount -uz ~/hybrid-os 2>/dev/null
         fusermount -uz ~/meu_google_drive 2>/dev/null
         pkill -f "rclone mount"
-        pkill -f code
         echo -e "${VERDE}[OK] Unidades liberadas. Saindo com segurança!${SEM_COR}"
         exit 0
         ;;
