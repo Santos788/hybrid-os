@@ -55,7 +55,7 @@ case $opcao in
         
         echo -e "${VERDE}[OK] Disparando VS Code Fluido! Bons estudos de ADS!${SEM_COR}"
         # Abre o VS Code apontando direto para a pasta do seu projeto e rodando liso
-        ./VSCode-linux-x64/code ~/hybrid-os --no-sandbox --disable-gpu --disable-software-rasterizer &> /dev/null &
+        ./VSCode-linux-x64/code ~/hybrid-os --extensions-dir ~/hybrid-os/.vscode_ext --user-data-dir ~/hybrid-os/.vscode_data --no-sandbox --disable-gpu --disable-software-rasterizer &> /dev/null &
         ;;
     2)
         echo -e "${VERDE}[+] Montando apenas repositório via SFTP...${SEM_COR}"
