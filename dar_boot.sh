@@ -8,8 +8,7 @@ VERDE="\033[1;32m"
 AMARELO="\033[1;33m"
 SEM_COR="\033[0m"
 
-# 🌟 Pega o IP e Usuário passados pelo script preparar_e_rodar.sh
-# Se não existirem (caso rode solto), usa o padrão automático local
+# Pega o IP e Usuário passados pelo script preparar_e_rodar.sh
 IP_ALVO=${IP_CELULAR:-"localhost"}
 USER_ALVO=${USER_TERMUX:-"com.termux"}
 
@@ -41,10 +40,10 @@ case $opcao in
         echo -e "${VERDE}[+] Montando repositório do celular e nuvem...${SEM_COR}"
         mkdir -p ~/hybrid-os ~/meu_google_drive                         
         
-        # Conexão dinâmica usando as variáveis autodescobertas
-        sshfs -p 8022 "$USER_ALVO@$IP_ALVO:/storage/emulated/0/hybrid-os" ~/hybrid-os -o allow_other
+        # 🔒 ALTERAÇÃO AQUI: Blindagem de chaves e checagem de host para evitar Reset
+        sshfs -p 8022 "$USER_ALVO@$IP_ALVO:/storage/emulated/0/hybrid-os" ~/hybrid-os -o allow_other -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
         
-        # Inicialização do Google Drive em segundo plano usando as chaves injetadas na RAM
+        # Inicialização do Google Drive em segundo plano
         rclone mount gdrive: ~/meu_google_drive --allow-other --vfs-cache-mode full &
         
         echo -e "${VERDE}[OK] Ecossistema completo mapeado com sucesso!${SEM_COR}"
@@ -53,15 +52,14 @@ case $opcao in
         echo -e "${VERDE}[+] Montando apenas repositório do celular...${SEM_COR}"
         mkdir -p ~/hybrid-os
 
-        # Conexão exclusiva dinâmica com o Termux
-        sshfs -p 8022 "$USER_ALVO@$IP_ALVO:/storage/emulated/0/hybrid-os" ~/hybrid-os -o allow_other
+        # 🔒 ALTERAÇÃO AQUI: Blindagem de chaves e checagem de host para evitar Reset
+        sshfs -p 8022 "$USER_ALVO@$IP_ALVO:/storage/emulated/0/hybrid-os" ~/hybrid-os -o allow_other -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
         
         echo -e "${VERDE}[OK] Pasta de projetos ativa em ~/hybrid-os!${SEM_COR}"
         ;;
     3)
         echo -e "${AMARELO}[-] Desmontando e limpando ambiente...${SEM_COR}"
 
-        # Desmontagem forçada para não prender processos na memória RAM
         sudo umount -f ~/hybrid-os 2>/dev/null
         sudo umount -f ~/meu_google_drive 2>/dev/null
         fusermount -uz ~/hybrid-os 2>/dev/null
