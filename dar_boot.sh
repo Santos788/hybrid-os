@@ -38,7 +38,7 @@ case $opcao in
         echo -e "${VERDE}[+] Montando repositório via SFTP e nuvem...${SEM_COR}"
         mkdir -p ~/hybrid-os ~/meu_google_drive                         
         
-        # Cria uma configuração temporária do rclone para o celular via SFTP (contorna o erro do sshfs)
+        # 🔒 Usa a chave copiada pelo preparar_e_rodar.sh para logar direto sem senha
         rclone mount :sftp: ~/hybrid-os --sftp-host="$IP_ALVO" --sftp-port=8022 --sftp-user="$USER_ALVO" --sftp-key-file="$HOME/.ssh/id_rsa" --allow-other --vfs-cache-mode full 2>/dev/null &
         
         # Inicialização do Google Drive
