@@ -45,7 +45,7 @@ case $opcao in
         sshfs -p 8022 com.termux@192.168.141.218:/storage/emulated/0/hybrid-os ~/hybrid-os -o allow_other
         
         # Inicialização do Google Drive em segundo plano
-        rclone mount seu_drive: ~/meu_google_drive --allow-other --vfs-cache-mode writes &
+        rclone mount gdrive: ~/meu_google_drive --allow-other --vfs-cache-mode writes &
         
         echo -e "${VERDE}[OK] Ecossistema completo mapeado com sucesso!${SEM_COR}"
         ;;
