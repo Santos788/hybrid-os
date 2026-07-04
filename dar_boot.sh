@@ -25,7 +25,7 @@ echo ""
 echo -e "${CIANO}+========================================================+${SEM_COR}"
 echo -e "${CIANO}|${SEM_COR} OPTION ${CIANO}|${SEM_COR}               DESCRIPTION                      ${CIANO}|${SEM_COR}"
 echo -e "${CIANO}+========================================================+${SEM_COR}"
-echo -e "${CIANO}|${SEM_COR}   1    ${CIANO}|${SEM_COR} - Montar ambiente completo (Celular + Drive)  ${CIANO}|${SEM_COR}"
+echo -e "${CIANO}|${SEM_COR}   1    ${CIANO}|${SEM_COR} - Montar ambiente completo + Iniciar VS Code  ${CIANO}|${SEM_COR}"
 echo -e "${CIANO}|${SEM_COR}   2    ${CIANO}|${SEM_COR} - Montar apenas armazenamento do Celular        ${CIANO}|${SEM_COR}"
 echo -e "${CIANO}|${SEM_COR}   3    ${CIANO}|${SEM_COR} - Desmontar e sair com segurança                ${CIANO}|${SEM_COR}"
 echo -e "${CIANO}+========================================================+${SEM_COR}"
@@ -38,20 +38,29 @@ case $opcao in
         echo -e "${VERDE}[+] Montando repositório via SFTP e nuvem...${SEM_COR}"
         mkdir -p ~/hybrid-os ~/meu_google_drive                         
         
-        # 🎯 Rota corrigida: o rclone entra no Termux e vai direto para a pasta compartilhada do seu projeto
         rclone mount :sftp:storage/shared/hybrid-os ~/hybrid-os --sftp-host="$IP_ALVO" --sftp-port=8022 --sftp-user="$USER_ALVO" --sftp-key-file="$HOME/.ssh/id_rsa" --allow-other --vfs-cache-mode full 2>/dev/null &
-        
-        # Inicialização do Google Drive
         rclone mount gdrive: ~/meu_google_drive --allow-other --vfs-cache-mode full &
         
-        echo -e "${VERDE}[OK] Ecossistema completo mapeado com sucesso!${SEM_COR}"
+        echo -e "${VERDE}[OK] Ecossistema mapeado com sucesso!${SEM_COR}"
+        
+        # 🚀 AUTOMAÇÃO DO VS CODE LEVE NA RAM
+        echo -e "${CIANO}[+] Preparando VS Code Otimizado na RAM...${SEM_COR}"
+        cd /tmp
+        if [ ! -d "VSCode-linux-x64" ]; then
+            echo -e "${AMARELO}[...] Baixando estrutura do editor (Apenas no primeiro boot)...${SEM_COR}"
+            wget -q --show-progress -O vscode.tar.gz "https://code.visualstudio.com/sha/download?build=stable&os=linux-x64"
+            tar -xzf vscode.tar.gz
+            rm -f vscode.tar.gz
+        fi
+        
+        echo -e "${VERDE}[OK] Disparando VS Code Fluido! Bons estudos de ADS!${SEM_COR}"
+        # Abre o VS Code apontando direto para a pasta do seu projeto e rodando liso
+        ./VSCode-linux-x64/code ~/hybrid-os --no-sandbox --disable-gpu --disable-software-rasterizer &> /dev/null &
         ;;
     2)
         echo -e "${VERDE}[+] Montando apenas repositório via SFTP...${SEM_COR}"
         mkdir -p ~/hybrid-os
-
         rclone mount :sftp:storage/shared/hybrid-os ~/hybrid-os --sftp-host="$IP_ALVO" --sftp-port=8022 --sftp-user="$USER_ALVO" --sftp-key-file="$HOME/.ssh/id_rsa" --allow-other --vfs-cache-mode full 2>/dev/null &
-        
         echo -e "${VERDE}[OK] Pasta de projetos ativa em ~/hybrid-os!${SEM_COR}"
         ;;
     3)
@@ -61,6 +70,7 @@ case $opcao in
         fusermount -uz ~/hybrid-os 2>/dev/null
         fusermount -uz ~/meu_google_drive 2>/dev/null
         pkill -f "rclone mount"
+        pkill -f code
         echo -e "${VERDE}[OK] Unidades liberadas. Saindo com segurança!${SEM_COR}"
         exit 0
         ;;
