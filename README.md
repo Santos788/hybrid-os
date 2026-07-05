@@ -26,12 +26,22 @@ Responsável por preparar o ambiente limpo na RAM do notebook logo após o boot.
 
 ### 2. `dar_boot.sh` (Armazenado no Celular)
 O gerenciador e inicializador visual do ecossistema. Fornece uma interface interativa estilizada em arte ASCII diretamente no terminal do notebook para montar as unidades virtuais:
-* **Opção 1 (Completo):** Monta a pasta de projetos do celular em `~/hybrid-os` (mirando direto em `storage/shared/hybrid-os`) e o Google Drive virtual em `~/meu_google_drive`.
+* **Opção 1 (Completo):** Monta a pasta de projetos do celular em `~/hybrid-os` (mirando direto em `storage/shared/hybrid-os`), monta o Google Drive virtual em `~/meu_google_drive`, restaura o backup de extensões e inicializa o **VS Code Otimizado para RAM** (com aceleração de GPU desativada para evitar travamentos no ambiente Live).
 * **Opção 2 (Apenas Celular):** Monta exclusivamente a pasta de projetos local do Termux.
-* **Opção 3 (Sair):** Executa a desmontagem segura.
+* **Opção 3 (Sair e Salvar):** Executa a compactação segura de extensões/configurações, desmonta as unidades e encerra os processos com segurança.
 
 ### 3. `limpar_tudo.sh` (Armazenado no Celular)
-Script de encerramento seguro. Desmonta as unidades virtuais e mata os processos do `rclone mount` ativos na memória RAM antes de desligar o notebook, garantindo a integridade total dos dados e arquivos de banco de dados (como SQLite3) no dispositivo Android.
+Script de encerramento seguro complementar. Desmonta as unidades virtuais e mata os processos do `rclone mount` ativos na memória RAM antes de desligar o notebook, garantindo a integridade total dos dados e arquivos de banco de dados (como SQLite3) no dispositivo Android.
+
+---
+
+## 💾 Estratégia de Persistência de Dados (O Segredo do Ecossistema)
+
+Como o Host opera de forma volátil, a retenção de dados foi arquitetada em três camadas estratégicas para garantir que **nada seja perdido no reboot**:
+
+* **Projetos e Bancos de Dados (Arquivos `.py`, `.json`, `.db`):** Salvos de forma síncrona diretamente no armazenamento físico do Android (`storage/shared/hybrid-os`) via Rclone Mount. Toda alteração ou `Ctrl + S` é gravada imediatamente no celular.
+* **Ambiente de Desenvolvimento (VS Code Portátil):** O editor executa na velocidade da RAM do notebook para máxima fluidez. Suas extensões (incluindo pacotes de idiomas) e configurações personalizadas são salvas nativamente no `/tmp` e compactadas em um arquivo `.vscode_backup.tar.gz` enviado ao celular ao escolher a **Opção 3** do menu. No próximo boot, o ambiente descompacta tudo de volta de forma automática.
+* **Bibliotecas Python (`pip install`):** Gerenciadas localmente através de Ambientes Virtuais (**`venv`**) criados dentro da pasta raiz de cada projeto. Como a estrutura do ambiente virtual reside no armazenamento do celular, todas as dependências de backend (como *FastAPI*, *Flask* ou *Uvicorn*) permanecem instaladas de forma permanente.
 
 ---
 
@@ -42,12 +52,11 @@ Com o notebook recém-iniciado em modo Live, abra o terminal e execute o dispara
 ```bash
 curl -sL https://raw.githubusercontent.com/Santos788/hybrid-os/main/preparar_e_rodar.sh > /tmp/run.sh && bash /tmp/run.sh
 ```
-
 ## 👥 Como Usar no seu Próprio Aparelho (Para Outros Usuários)
 
 Se você deseja replicar o ecossistema HybridOS usando este repositório como base, siga estes passos:
 
-        No seu Celular (Android):
+    No seu Celular (Android):
 
         Instale o Termux e o pacote OpenSSH (pkg install openssh).
 
@@ -67,4 +76,4 @@ Se você deseja replicar o ecossistema HybridOS usando este repositório como ba
 
     No Notebook (Live CD Linux):
 
-        Execute o comando de disparo do curl listado na seção de inicialização. O script cuidará do pareamento de chaves e montagem de forma 100% automatizada.
+        Execute o comando de disparo do curl listado na seção de inicialização. O script cuidará do pareamento de chaves, otimização de renderização gráfica e montagem de forma 100% automatizada.
