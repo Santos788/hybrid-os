@@ -37,22 +37,43 @@ Script de encerramento seguro complementar. Desmonta as unidades virtuais e mata
 
 ## 💾 Estratégia de Persistência de Dados (O Segredo do Ecossistema)
 
-Como o Host opera de forma volátil, a retenção de dados foi arquitetada em três camadas estratégicas para garantir que **nada seja perdido no reboot**:
+Como o Host opera de forma volátil e o sistema de arquivos do Android possui travas rígidas de segurança, a retenção de dados foi segmentada em três camadas inteligentes para garantir desempenho máximo e risco zero de perda de dados:
 
 * **Projetos e Bancos de Dados (Arquivos `.py`, `.json`, `.db`):** Salvos de forma síncrona diretamente no armazenamento físico do Android (`storage/shared/hybrid-os`) via Rclone Mount. Toda alteração ou `Ctrl + S` é gravada imediatamente no celular.
 * **Ambiente de Desenvolvimento (VS Code Portátil):** O editor executa na velocidade da RAM do notebook para máxima fluidez. Suas extensões (incluindo pacotes de idiomas) e configurações personalizadas são salvas nativamente no `/tmp` e compactadas em um arquivo `.vscode_backup.tar.gz` enviado ao celular ao escolher a **Opção 3** do menu. No próximo boot, o ambiente descompacta tudo de volta de forma automática.
-* **Bibliotecas Python (`pip install`):** Gerenciadas localmente através de Ambientes Virtuais (**`venv`**) criados dentro da pasta raiz de cada projeto. Como a estrutura do ambiente virtual reside no armazenamento do celular, todas as dependências de backend (como *FastAPI*, *Flask* ou *Uvicorn*) permanecem instaladas de forma permanente.
+* **Bibliotecas Python (`pip install`):** Para contornar o bloqueio do Android a links simbólicos (como o erro de I/O no `lib64`), o Ambiente Virtual (**`venv`**) é criado e executado inteiramente na memória RAM (`/tmp/venv_projeto`). A persistência das dependências é feita de forma profissional utilizando o arquivo de manifesto do ecossistema (`requirements.txt`) salvo na pasta do projeto no celular.
 
 ---
 
-## 🚀 Como Inicializar no Notebook
+## 🐍 Guia de Trabalho: Como codar em Python com venv na RAM
+
+Para garantir que o ambiente virtual não brigue com o sistema de arquivos do celular, utilize sempre este fluxo padrão ao abrir seus projetos:
+
+1. **Ativar/Criar o Ambiente na RAM:**
+   ```bash
+   cd ~/hybrid-os/Projetos/seu_projeto
+   python3 -m venv /tmp/venv_projeto
+   source /tmp/venv_projeto/bin/activate
+   ```
+Restaurar suas Bibliotecas (No primeiro boot):
+Bash
+
+pip install -r requirements.txt
+
+Salvar novas Bibliotecas adicionadas (Sempre que instalar algo novo):
+Bash
+
+    pip install nova-biblioteca
+    pip freeze > requirements.txt
+
+🚀 Como Inicializar no Notebook
 
 Com o notebook recém-iniciado em modo Live, abra o terminal e execute o disparador automatizado:
+Bash
 
-```bash
-curl -sL https://raw.githubusercontent.com/Santos788/hybrid-os/main/preparar_e_rodar.sh > /tmp/run.sh && bash /tmp/run.sh
-```
-## 👥 Como Usar no seu Próprio Aparelho (Para Outros Usuários)
+curl -sL [https://raw.githubusercontent.com/Santos788/hybrid-os/main/preparar_e_rodar.sh](https://raw.githubusercontent.com/Santos788/hybrid-os/main/preparar_e_rodar.sh) > /tmp/run.sh && bash /tmp/run.sh
+
+👥 Como Usar no seu Próprio Aparelho (Para Outros Usuários)
 
 Se você deseja replicar o ecossistema HybridOS usando este repositório como base, siga estes passos:
 
@@ -77,3 +98,5 @@ Se você deseja replicar o ecossistema HybridOS usando este repositório como ba
     No Notebook (Live CD Linux):
 
         Execute o comando de disparo do curl listado na seção de inicialização. O script cuidará do pareamento de chaves, otimização de renderização gráfica e montagem de forma 100% automatizada.
+
+   
