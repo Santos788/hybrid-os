@@ -36,10 +36,10 @@ read -p "$(echo -e ${AMARELO}"Escolha uma opção [1-3]: "${SEM_COR})" opcao
 case $opcao in
     1)
         echo -e "${VERDE}[+] Montando repositório via SFTP e nuvem...${SEM_COR}"
-        mkdir -p ~/hybrid-os ~/meu_google_drive                         
+        mkdir -p "$HOME/hybrid-os" "$HOME/meu_google_drive"                         
         
-        rclone mount :sftp:storage/shared/hybrid-os ~/hybrid-os --sftp-host="$IP_ALVO" --sftp-port=8022 --sftp-user="$USER_ALVO" --sftp-key-file="$HOME/.ssh/id_rsa" --allow-other --vfs-cache-mode full 2>/dev/null &
-        rclone mount gdrive: ~/meu_google_drive --allow-other --vfs-cache-mode full &
+        rclone mount :sftp:storage/shared/hybrid-os "$HOME/hybrid-os" --sftp-host="$IP_ALVO" --sftp-port=8022 --sftp-user="$USER_ALVO" --sftp-key-file="$HOME/.ssh/id_rsa" --allow-other --vfs-cache-mode full 2>/dev/null &
+        rclone mount gdrive: "$HOME/meu_google_drive" --allow-other --vfs-cache-mode full &
         
         echo -e "${VERDE}[OK] Ecossistema mapeado com sucesso!${SEM_COR}"
         
@@ -53,38 +53,42 @@ case $opcao in
             rm -f vscode.tar.gz
         fi
         
-        # RESTAURA EXTENSÕES SE HOUVER BACKUP NO CELULAR
-        if [ -f "~/hybrid-os/.vscode_backup.tar.gz" ]; then
+        # RESTAURA EXTENSÕES USANDO CAMINHO SEGURO REESCRITO ($HOME)
+        if [ -f "$HOME/hybrid-os/.vscode_backup.tar.gz" ]; then
             echo -e "${CIANO}[+] Restaurando suas extensões salvadas...${SEM_COR}"
-            tar -xzf ~/hybrid-os/.vscode_backup.tar.gz -C ~/ 2>/dev/null
+            tar -xzf "$HOME/hybrid-os/.vscode_backup.tar.gz" -C "$HOME/" 2>/dev/null
         fi
         
         echo -e "${VERDE}[OK] Disparando VS Code Fluido! Bons estudos de ADS!${SEM_COR}"
-        # Roda usando a pasta nativa da RAM, sem travar no Android
-        ./VSCode-linux-x64/code ~/hybrid-os --no-sandbox --disable-gpu --disable-software-rasterizer &> /dev/null &
+        ./VSCode-linux-x64/code "$HOME/hybrid-os" --no-sandbox --disable-gpu --disable-software-rasterizer &> /dev/null &
         ;;
     2)
         echo -e "${VERDE}[+] Montando apenas repositório via SFTP...${SEM_COR}"
-        mkdir -p ~/hybrid-os
-        rclone mount :sftp:storage/shared/hybrid-os ~/hybrid-os --sftp-host="$IP_ALVO" --sftp-port=8022 --sftp-user="$USER_ALVO" --sftp-key-file="$HOME/.ssh/id_rsa" --allow-other --vfs-cache-mode full 2>/dev/null &
+        mkdir -p "$HOME/hybrid-os"
+        rclone mount :sftp:storage/shared/hybrid-os "$HOME/hybrid-os" --sftp-host="$IP_ALVO" --sftp-port=8022 --sftp-user="$USER_ALVO" --sftp-key-file="$HOME/.ssh/id_rsa" --allow-other --vfs-cache-mode full 2>/dev/null &
         echo -e "${VERDE}[OK] Pasta de projetos ativa em ~/hybrid-os!${SEM_COR}"
         ;;
     3)
         echo -e "${AMARELO}[-] Fazendo backup das extensões e configurações na RAM...${SEM_COR}"
         pkill -f code
         sleep 1
-        # Compacta a pasta de extensões da RAM direto para o celular
-        if [ -d "~/.vscode" ] || [ -d "~/.config/Code" ]; then
-            tar -czf /tmp/vscode_backup.tar.gz -C ~/ .vscode .config/Code 2>/dev/null
-            cp /tmp/vscode_backup.tar.gz ~/hybrid-os/.vscode_backup.tar.gz 2>/dev/null
+        
+        # Cria a lista de alvos de backup dinamicamente baseado no que existe de fato
+        ALVOS_BACKUP=""
+        [ -d "$HOME/.vscode" ] && ALVOS_BACKUP=".vscode"
+        [ -d "$HOME/.config/Code" ] && ALVOS_BACKUP="$ALVOS_BACKUP .config/Code"
+
+        if [ ! -z "$ALVOS_BACKUP" ]; then
+            tar -czf /tmp/vscode_backup.tar.gz -C "$HOME" $ALVOS_BACKUP 2>/dev/null
+            cp /tmp/vscode_backup.tar.gz "$HOME/hybrid-os/.vscode_backup.tar.gz" 2>/dev/null
             echo -e "${VERDE}[OK] Extensões salvas com sucesso no celular!${SEM_COR}"
         fi
 
         echo -e "${AMARELO}[-] Desmontando unidades...${SEM_COR}"
-        sudo umount -f ~/hybrid-os 2>/dev/null
-        sudo umount -f ~/meu_google_drive 2>/dev/null
-        fusermount -uz ~/hybrid-os 2>/dev/null
-        fusermount -uz ~/meu_google_drive 2>/dev/null
+        sudo umount -f "$HOME/hybrid-os" 2>/dev/null
+        sudo umount -f "$HOME/meu_google_drive" 2>/dev/null
+        fusermount -uz "$HOME/hybrid-os" 2>/dev/null
+        fusermount -uz "$HOME/meu_google_drive" 2>/dev/null
         pkill -f "rclone mount"
         echo -e "${VERDE}[OK] Unidades liberadas. Saindo com segurança!${SEM_COR}"
         exit 0
