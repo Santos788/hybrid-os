@@ -26,9 +26,9 @@ Responsável por preparar o ambiente limpo na RAM do notebook logo após o boot.
 
 ### 2. `dar_boot.sh` (Armazenado no Celular)
 O gerenciador e inicializador visual do ecossistema. Fornece uma interface interativa estilizada em arte ASCII diretamente no terminal do notebook para montar as unidades virtuais:
-* **Opção 1 (Completo):** Monta a pasta de projetos do celular em `~/hybrid-os` (mirando direto em `storage/shared/hybrid-os`), monta o Google Drive virtual em `~/meu_google_drive`, restaura o backup de extensões e inicializa o **VS Code Otimizado para RAM** (com aceleração de GPU desativada para evitar travamentos no ambiente Live).
+* **Opção 1 (Completo):** Monta a pasta de projetos do celular em `~/hybrid-os` (mirando direto em `storage/shared/hybrid-os`), monta o Google Drive virtual em `~/meu_google_drive`, restaura o backup de extensões usando expansão de caminhos segura baseada em `$HOME` e inicializa o **VS Code Otimizado para RAM** (com aceleração de GPU desativada para evitar travamentos no ambiente Live).
 * **Opção 2 (Apenas Celular):** Monta exclusivamente a pasta de projetos local do Termux.
-* **Opção 3 (Sair e Salvar):** Executa a compactação segura de extensões/configurações, desmonta as unidades e encerra os processos com segurança.
+* **Opção 3 (Sair e Salvar):** Realiza uma checagem dinâmica na RAM. Caso existam, as pastas `.vscode` e `.config/Code` são blindadas e compactadas em um arquivo `.tar.gz` enviado ao celular. Em seguida, desmonta as unidades e encerra os processos com segurança.
 
 ### 3. `limpar_tudo.sh` (Armazenado no Celular)
 Script de encerramento seguro complementar. Desmonta as unidades virtuais e mata os processos do `rclone mount` ativos na memória RAM antes de desligar o notebook, garantindo a integridade total dos dados e arquivos de banco de dados (como SQLite3) no dispositivo Android.
@@ -57,8 +57,9 @@ Para garantir que o ambiente virtual não brigue com o sistema de arquivos do ce
    ```
 Restaurar suas Bibliotecas (No primeiro boot):
 Bash
-
+```
 pip install -r requirements.txt
+```
 
 Salvar novas Bibliotecas adicionadas (Sempre que instalar algo novo):
 Bash
@@ -66,14 +67,23 @@ Bash
     pip install nova-biblioteca
     pip freeze > requirements.txt
 
+Salva novas Bibliotecas adicionadas (Sempre que instalar algo novo):
+Bash
+```
+pip install nova-biblioteca
+pip freeze > requirements.txt
+```
+
 🚀 Como Inicializar no Notebook
 
 Com o notebook recém-iniciado em modo Live, abra o terminal e execute o disparador automatizado:
 Bash
 
-curl -sL [https://raw.githubusercontent.com/Santos788/hybrid-os/main/preparar_e_rodar.sh](https://raw.githubusercontent.com/Santos788/hybrid-os/main/preparar_e_rodar.sh) > /tmp/run.sh && bash /tmp/run.sh
+```
+curl -sL https://raw.githubusercontent.com/Santos788/hybrid-os/main/preparar_e_rodar.sh > /tmp/run.sh && bash /tmp/run.sh
+```
 
-👥 Como Usar no seu Próprio Aparelho (Para Outros Usuários)
+## 👥 Como Usar no seu Próprio Aparelho (Para Outros Usuários)
 
 Se você deseja replicar o ecossistema HybridOS usando este repositório como base, siga estes passos:
 
@@ -98,5 +108,3 @@ Se você deseja replicar o ecossistema HybridOS usando este repositório como ba
     No Notebook (Live CD Linux):
 
         Execute o comando de disparo do curl listado na seção de inicialização. O script cuidará do pareamento de chaves, otimização de renderização gráfica e montagem de forma 100% automatizada.
-
-   
