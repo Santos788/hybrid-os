@@ -42,9 +42,23 @@ fi
 # ------------------------------------------------------------------
 # 4) Autodescoberta do celular
 # ------------------------------------------------------------------
-echo -e "\033[1;33m[ Buscando ] Procurando celular Termux na rede local...\033[0m"
-FAIXA_REDE=$(ip route | grep default | awk '{print $3}' | cut -d. -f1-3)".0/24"
-IP_CELULAR=$(nmap -p 8022 --open -oG - "$FAIXA_REDE" | grep "Host:" | awk '{print $2}' | head -n 1)
+# --- COPIE E SUBSTITUA O BLOCO DE BUSCA POR ESTE NO SEU SCRIPT INICIAL ---
+echo "[ Buscando ] Procurando celular Termux na rede local..."
+
+# Extrai apenas o primeiro IP ativo da máquina local de forma limpa
+IP_MAQUINA=$(hostname -I | awk '{print $1}')
+
+if [ -n "$IP_MAQUINA" ]; then
+    # Monta a subrede corretamente (ex: 192.168.100.0/24)
+    SUBREDE=$(echo "$IP_MAQUINA" | cut -d'.' -f1-3)".0/24"
+    
+    # Realiza a varredura silenciosa buscando a assinatura do Termux
+    IP_DESCOBERTO=$(nmap -sn "$SUBREDE" 2>/dev/null | grep -B 2 "com.termux" | head -n 1 | awk '{print $5}')
+fi
+
+# Se encontrar, usa ele. Se falhar, assume o seu IP padrão de contingência.
+IP_CELULAR="${IP_DESCOBERTO:-"192.168.100.127"}"
+# -------------------------------------------------------------------------
 
 if [ -z "$IP_CELULAR" ]; then
     echo -e "\033[1;31m[ ! ] Não consegui detectar o celular automaticamente.\033[0m"
