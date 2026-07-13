@@ -7,16 +7,34 @@ VERDE="\033[1;32m"
 AMARELO="\033[1;33m"
 VERMELHO="\033[1;31m"
 SEM_COR="\033[0m"
-# --- SUBSTITUA POR ESTE BLOCO (IP MANUAL) ---
 
-IP_CELULAR_FIXO="192.168.33.235"
+# =====================================================================
+# BLINDAGEM DE REDE E AUTODESCOBERTA DO CELULAR (CORREÇÃO DO BUG)
+# =====================================================================
+echo -e "${CIANO}[ Buscando ] Procurando nó Termux na rede local...${SEM_COR}"
 
-IP_ALVO=${IP_CELULAR:-$IP_CELULAR_FIXO}
+# Extrai apenas o primeiro IP ativo da máquina local
+IP_MAQUINA=$(hostname -I | awk '{print $1}')
 
+if [ -n "$IP_MAQUINA" ]; then
+    # Monta a subrede de forma limpa (ex: 192.168.100.0/24)
+    SUBREDE=$(echo "$IP_MAQUINA" | cut -d'.' -f1-3)".0/24"
+    
+    # Realiza a varredura silenciosa buscando a assinatura do Termux
+    IP_DESCOBERTO=$(nmap -sn "$SUBREDE" 2>/dev/null | grep -B 2 "com.termux" | head -n 1 | awk '{print $5}')
+fi
+
+# Se encontrar o IP via nmap, usa ele. Se falhar, assume o IP padrão de contingência.
+IP_FINAL="${IP_DESCOBERTO:-"192.168.100.127"}"
+
+IP_ALVO=${IP_CELULAR:-$IP_FINAL}
 USER_ALVO=${USER_TERMUX:-"com.termux"}
-# Mesmos caminhos usados no preparar_e_rodar.sh e no limpar_tudo.sh —
-# não mude aqui sem mudar nos outros dois, senão volta o bug da
-# "pasta fantasma".
+
+echo -e "${VERDE}[ OK ] Alvo definido para: $IP_ALVO${SEM_COR}"
+echo ""
+# =====================================================================
+
+# Mesmos caminhos usados no preparar_e_rodar.sh e no limpar_tudo.sh
 MOUNT_HYBRID="${MOUNT_HYBRID:-$HOME/hybrid-os}"
 MOUNT_DRIVE="${MOUNT_DRIVE:-$HOME/meu_google_drive}"
 
@@ -33,7 +51,7 @@ echo -e "${SEM_COR}"
 echo -e "${CIANO}VERSION:2.0  DISTRO:Android  MOUNT:rclone_sftp  STATUS:READY${SEM_COR}"
 echo ""
 echo -e "${CIANO}+========================================================+${SEM_COR}"
-echo -e "${CIANO}|${SEM_COR} OPTION ${CIANO}|${SEM_COR}               DESCRIPTION                      ${CIANO}|${SEM_COR}"
+echo -e "${CIANO}|${SEM_COR} OPTION ${CIANO}|${SEM_COR}                DESCRIPTION                      ${CIANO}|${SEM_COR}"
 echo -e "${CIANO}+========================================================+${SEM_COR}"
 echo -e "${CIANO}|${SEM_COR}   1    ${CIANO}|${SEM_COR} - Montar ambiente completo + Iniciar VS Code  ${CIANO}|${SEM_COR}"
 echo -e "${CIANO}|${SEM_COR}   2    ${CIANO}|${SEM_COR} - Montar apenas armazenamento do Celular        ${CIANO}|${SEM_COR}"
@@ -43,8 +61,7 @@ echo ""
 
 read -rp "$(echo -e "${AMARELO}Escolha uma opção [1-3]: ${SEM_COR}")" opcao
 
-# Espera até N segundos um ponto de montagem ficar pronto antes de
-# seguir em frente — evita abrir o VS Code numa pasta ainda vazia.
+# Espera até N segundos um ponto de montagem ficar pronto antes de seguir em frente
 esperar_montagem() {
     local caminho="$1"
     local tentativas=15
@@ -102,10 +119,6 @@ case $opcao in
         fi
 
         echo -e "${VERDE}[OK] Disparando VS Code Fluido! Bons estudos de ADS!${SEM_COR}"
-        # Nota de segurança: --no-sandbox desativa a sandbox do Chromium
-        # usada internamente pelo VS Code. É um requisito comum em
-        # ambientes Live/root, mas reduz o isolamento do processo —
-        # evite abrir extensões/arquivos não confiáveis nesta sessão.
         ./VSCode-linux-x64/code "$MOUNT_HYBRID" --no-sandbox --disable-gpu --disable-software-rasterizer &> /dev/null &
         ;;
     2)
@@ -121,8 +134,6 @@ case $opcao in
         ;;
     3)
         echo -e "${AMARELO}[-] Fazendo backup das extensões e configurações na RAM...${SEM_COR}"
-        # Encerra só o processo do VS Code que este script abriu
-        # (caminho específico), em vez de qualquer coisa com "code" no nome.
         pkill -f "VSCode-linux-x64/code" 2>/dev/null || true
         sleep 1
 
@@ -139,7 +150,7 @@ case $opcao in
                     cat /tmp/cp_err.log
                 fi
             else
-                echo -e "${VERMELHO}[ ERRO ] Falha ao compactar as extensões:${SEM_COR}"
+                echo -e "${VERMEDLO}[ ERRO ] Falha ao compactar as extensões:${SEM_COR}"
                 cat /tmp/tar_err.log
             fi
         fi
