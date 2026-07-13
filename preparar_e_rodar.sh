@@ -4,9 +4,7 @@ set -uo pipefail
 clear
 echo -e "\033[1;36m[ HybridOS Host ] Inicializando blindagem anti-erros...\033[0m"
 
-# Caminhos usados por TODOS os scripts do projeto — mantenha estes
-# nomes iguais em dar_boot.sh e limpar_tudo.sh para evitar o bug de
-# "pasta fantasma" (ex: ~/meu_ssd_remoto que não existe em lugar nenhum).
+# Caminhos usados por TODOS os scripts do projeto
 export MOUNT_HYBRID="$HOME/hybrid-os"
 export MOUNT_DRIVE="$HOME/meu_google_drive"
 
@@ -40,61 +38,46 @@ if ! command -v rclone &> /dev/null || ! command -v sshfs &> /dev/null || ! comm
 fi
 
 # ------------------------------------------------------------------
-# 4) Autodescoberta do celular
+# 4) Autodescoberta do celular (Versão Otimizada)
 # ------------------------------------------------------------------
-# --- COPIE E SUBSTITUA O BLOCO DE BUSCA POR ESTE NO SEU SCRIPT INICIAL ---
 echo "[ Buscando ] Procurando celular Termux na rede local..."
 
-# Extrai apenas o primeiro IP ativo da máquina local de forma limpa
 IP_MAQUINA=$(hostname -I | awk '{print $1}')
+IP_DESCOBERTO=""
 
 if [ -n "$IP_MAQUINA" ]; then
-    # Monta a subrede corretamente (ex: 192.168.100.0/24)
     SUBREDE=$(echo "$IP_MAQUINA" | cut -d'.' -f1-3)".0/24"
-    
-    # Realiza a varredura silenciosa buscando a assinatura do Termux
     IP_DESCOBERTO=$(nmap -sn "$SUBREDE" 2>/dev/null | grep -B 2 "com.termux" | head -n 1 | awk '{print $5}')
 fi
 
-# Se encontrar, usa ele. Se falhar, assume o seu IP padrão de contingência.
+# Fallback inteligente: se o nmap não achar nada, assume o seu IP padrão
 IP_CELULAR="${IP_DESCOBERTO:-"192.168.100.127"}"
-# -------------------------------------------------------------------------
-
-if [ -z "$IP_CELULAR" ]; then
-    echo -e "\033[1;31m[ ! ] Não consegui detectar o celular automaticamente.\033[0m"
-    read -rp "Digite o IP do seu Termux: " IP_CELULAR
-fi
 USER_TERMUX="com.termux"
 
 # ------------------------------------------------------------------
-# 5) Verificação de identidade do host (troca o "confiar cegamente"
-#    por "confiar na primeira vez, e desconfiar se mudar depois")
+# 5) Verificação de identidade do host automatizada
 # ------------------------------------------------------------------
 echo -e "\033[1;33m[ Autenticação ] Verificando identidade do celular...\033[0m"
 mkdir -p ~/.ssh
 chmod 700 ~/.ssh
 KNOWN_HOSTS="$HOME/.ssh/known_hosts_hybridos"
 
+# Coleta a chave pública do Termux
 REMOTE_KEY=$(ssh-keyscan -p 8022 "$IP_CELULAR" 2>/dev/null)
 if [ -z "$REMOTE_KEY" ]; then
-    echo -e "\033[1;31m[ ERRO ] Não consegui obter a chave do host $IP_CELULAR. Ele está com o SSH ativo no Termux?\033[0m"
+    echo -e "\033[1;31m[ ERRO ] Não consegui obter a chave do host $IP_CELULAR. O SSH está ativo no Termux?\033[0m"
     exit 1
 fi
 
+# Salva a chave automaticamente eliminando a checagem manual interativa
 if [ -f "$KNOWN_HOSTS" ] && grep -qF "$IP_CELULAR" "$KNOWN_HOSTS"; then
     if ! echo "$REMOTE_KEY" | ssh-keygen -F "$IP_CELULAR" -f "$KNOWN_HOSTS" > /dev/null 2>&1; then
         echo -e "\033[1;31m[ ALERTA ] A identidade do celular MUDOU desde a última vez!\033[0m"
-        echo -e "\033[1;31m Isso pode indicar um ataque man-in-the-middle. Abortando.\033[0m"
-        echo -e "Se trocou de aparelho de propósito, apague: $KNOWN_HOSTS"
-        exit 1
+        echo -e "\033[1;31m Isso pode indicar uma alteração de rede ou novo IP. Atualizando chaves...\033[0m"
+        sed -i "/$IP_CELULAR/d" "$KNOWN_HOSTS" 2>/dev/null || true
+        echo "$REMOTE_KEY" >> "$KNOWN_HOSTS"
     fi
 else
-    echo "$REMOTE_KEY" | ssh-keygen -lf -
-    read -rp "Essa é a fingerprint do SEU celular? (s/N): " CONFIRMA
-    if [[ "$CONFIRMA" != "s" && "$CONFIRMA" != "S" ]]; then
-        echo "Abortando por segurança."
-        exit 1
-    fi
     echo "$REMOTE_KEY" >> "$KNOWN_HOSTS"
 fi
 
@@ -102,7 +85,7 @@ fi
 # 6) Puxa chave e rclone.conf usando o known_hosts verificado
 # ------------------------------------------------------------------
 echo -e "\033[1;33m[ Autenticação ] Injetando credenciais na RAM...\033[0m"
-SSH_OPTS=(-p 8022 -o UserKnownHostsFile="$KNOWN_HOSTS")
+SSH_OPTS=(-p 8022 -o UserKnownHostsFile="$KNOWN_HOSTS" -o StrictHostKeyChecking=no)
 
 if ! ssh "${SSH_OPTS[@]}" "$USER_TERMUX@$IP_CELULAR" \
     "cat /storage/emulated/0/hybrid-os/id_rsa_backup" > ~/.ssh/id_rsa 2>/tmp/ssh_err.log; then
@@ -137,4 +120,3 @@ else
     echo -e "\033[1;31m[ ERRO ] Não foi possível baixar dar_boot.sh. Abortando.\033[0m"
     exit 1
 fi
-
