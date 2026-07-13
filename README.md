@@ -1,107 +1,140 @@
-# HybridOS
+# HybridOS V2 🚀
 
-Um jeito de transformar qualquer notebook velho (ou um Live USB do Linux Mint) numa estação de trabalho completa, usando o seu celular Android como "HD externo" via Wi-Fi.
+[![Shell](https://img.shields.io/badge/language-Shell-89e051?logo=gnu-bash&logoColor=white)](https://github.com/Santos788/hybrid-os/search?l=shell)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](#-licença)
+[![Status](https://img.shields.io/badge/status-ativo-success)](#)
 
-## A ideia por trás disso
+> Ecossistema de desenvolvimento híbrido e portátil que transforma qualquer notebook em um ambiente de trabalho estável, seguro e persistente, combinando um **Live CD/USB Linux Mint** (executado em RAM) com o armazenamento persistente de um dispositivo Android via **Termux**.
 
-Se você já tentou programar a partir de um Live USB, sabe o problema: tudo roda na RAM, e no segundo em que você desliga o notebook, seus arquivos, extensões e configurações somem junto.
+---
 
-O HybridOS resolve isso de um jeito meio inusitado: em vez de depender de um disco local, ele conecta o notebook ao seu celular Android (rodando Termux) via SSH/SFTP, e usa o `rclone` pra montar essa conexão como se fosse uma pasta normal do sistema. Na prática, você tem um notebook descartável e voador — reinicia, monta de novo, e seus arquivos continuam exatamente onde estavam, guardados no bolso.
+## 📖 Sobre o projeto
 
-É uma solução para um cenário bem específico: notebooks emprestados, laboratórios de faculdade, máquinas que você não confia o suficiente pra instalar um SO nelas, ou simplesmente a vontade de nunca mais perder um projeto por causa de um Live USB reiniciado sem querer.
+O **HybridOS** nasceu para resolver um problema comum de quem trabalha em ambientes **Linux Live**: a perda total de dados e configurações a cada reinicialização, já que tudo roda na memória RAM (volátil).
 
-## Como funciona, por trás dos panos
+A solução acopla o notebook rodando em modo Live a um celular Android via Termux, que atua como servidor de arquivos persistente. Com isso, projetos, bancos de dados e configurações do ambiente de desenvolvimento sobrevivem a qualquer reboot, sem exigir instalação local no disco do notebook.
 
-```
-┌─────────────────────┐         SSH / SFTP          ┌──────────────────┐
-│   Notebook (RAM)     │ ───────────────────────────▶│  Celular (Termux) │
-│   Linux Mint Live     │  ◀───────────────────────── │  Armazenamento    │
-│   + rclone mount      │        porta 8022           │  persistente      │
-└─────────────────────┘                              └──────────────────┘
-```
+**Principais benefícios:**
 
-O celular guarda os arquivos de verdade. O notebook só monta essa pasta remotamente e trabalha nela como se fosse local — com cache do `rclone` garantindo que a experiência não fique lenta demais mesmo numa rede doméstica comum.
+- ✅ Persistência completa de projetos, bancos de dados e configurações
+- ✅ Inicialização rápida e ambiente sempre limpo (Live CD)
+- ✅ Autenticação sem senha via chaves SSH
+- ✅ Autodescoberta de IP na rede local (sem configuração manual de roteador)
+- ✅ Backup automático de extensões e configurações do VS Code
 
-## O que você precisa antes de começar
+---
 
-- Um notebook rodando **Linux Mint em modo Live** (USB ou CD)
-- Um celular Android com o **Termux** instalado, com o servidor SSH ativo (`sshd`) na porta 8022
-- Ambos os dispositivos na **mesma rede Wi-Fi**
-- No Termux, ter rodado **`termux-setup-storage`** pelo menos uma vez (isso cria o link de acesso ao armazenamento real do celular — sem isso, o notebook vai conseguir se conectar, mas vai ver uma pasta vazia, o que costuma confundir bastante gente na primeira tentativa)
-- Uma chave SSH e um `rclone.conf` já preparados na pasta `hybrid-os` do armazenamento do celular (veja a seção de configuração inicial abaixo)
+## 🏗️ Arquitetura do sistema
 
-## Os três scripts
-
-| Script | O que ele faz |
+| Camada | Papel |
 |---|---|
-| `preparar_e_rodar.sh` | O ponto de partida. Instala as dependências no notebook, procura o celular na rede, autentica com ele e busca as credenciais necessárias. No fim, chama o `dar_boot.sh` automaticamente. |
-| `dar_boot.sh` | O menu principal. Monta o armazenamento do celular (e o Google Drive, se configurado), e opcionalmente já abre o VS Code direto na pasta do projeto. Também tem a opção de desmontar tudo com segurança, salvando suas extensões antes. |
-| `limpar_tudo.sh` | O botão de pânico. Desmonta tudo, mata os processos relacionados e limpa qualquer credencial que tenha ficado na RAM do notebook — importante rodar antes de desligar, principalmente se o notebook não é seu. |
+| **Host** (Notebook Live CD) | Roda Linux Mint inteiramente na RAM — estação de trabalho efêmera, limpa e segura |
+| **Core** (Celular/Termux) | Servidor de arquivos persistente: repositório, chaves de acesso, ferramentas e configurações |
+| **Mecanismo de link** (Motor V2) | Túnel SFTP gerenciado via **Rclone Mount**, com tolerância a falhas, cache em disco e reconexão automática via Wi-Fi ou USB |
 
-## Colocando pra rodar
+---
 
-No notebook (Live USB do Linux Mint), abra um terminal e rode:
+## 🛠️ Scripts principais
+
+### `preparar_e_rodar.sh`
+*Hospedado no GitHub · executado no notebook*
+
+Prepara o ambiente limpo na RAM logo após o boot:
+
+- Ajusta diretivas do FUSE (`user_allow_other`) com privilégios administrativos
+- Remove pontos de montagem órfãos e processos travados na memória
+- Instala dependências necessárias (`rclone`, `sshfs`, `nmap`)
+- **Autodescoberta de IP:** varre a rede local via `nmap` para localizar o celular automaticamente
+- **Injeção de chaves e credenciais:** obtém a chave SSH privada (`id_rsa_backup`) e o `rclone.conf` do celular, estabelecendo um handshake seguro sem exigir digitação de senha
+
+### `dar_boot.sh`
+*Armazenado no celular*
+
+Gerenciador e inicializador visual do ecossistema, com interface interativa em ASCII art:
+
+- **Opção 1 — Completo:** monta a pasta de projetos do celular em `~/hybrid-os`, monta o Google Drive virtual em `~/meu_google_drive`, restaura o backup de extensões e inicializa o VS Code otimizado para RAM (GPU desativada para evitar travamentos no ambiente Live)
+- **Opção 2 — Apenas celular:** monta somente a pasta de projetos local do Termux
+- **Opção 3 — Sair e salvar:** compacta `.vscode` e `.config/Code` (se existirem) em `.tar.gz`, envia ao celular, desmonta as unidades e encerra os processos com segurança
+
+### `limpar_tudo.sh`
+*Armazenado no celular*
+
+Encerramento seguro complementar: desmonta as unidades virtuais e finaliza os processos de `rclone mount` ativos, garantindo a integridade dos dados e bancos de dados (ex: SQLite3) no dispositivo Android.
+
+---
+
+## 💾 Estratégia de persistência de dados
+
+Como o host é volátil e o Android impõe restrições rígidas de segurança ao sistema de arquivos, os dados são segmentados em três camadas:
+
+1. **Projetos e bancos de dados** (`.py`, `.json`, `.db`) — salvos de forma síncrona no armazenamento físico do Android via Rclone Mount. Cada `Ctrl+S` é gravado imediatamente no celular.
+2. **Ambiente de desenvolvimento (VS Code)** — executa na velocidade da RAM do notebook. Extensões e configurações são salvas em `/tmp`, compactadas em `.vscode_backup.tar.gz` ao escolher a Opção 3, e restauradas automaticamente no próximo boot.
+3. **Bibliotecas Python (`pip install`)** — o `venv` roda inteiramente na RAM (`/tmp/venv_projeto`) para contornar o bloqueio do Android a links simbólicos. As dependências são persistidas via `requirements.txt`, salvo na pasta do projeto no celular.
+
+---
+
+## 🐍 Guia de trabalho: Python com venv na RAM
 
 ```bash
-curl -sL https://raw.githubusercontent.com/Santos788/hybrid-os/main/preparar_e_rodar.sh | bash
+# 1. Criar/ativar o ambiente virtual na RAM
+cd ~/hybrid-os/Projetos/seu_projeto
+python3 -m venv /tmp/venv_projeto
+source /tmp/venv_projeto/bin/activate
+
+# 2. Restaurar bibliotecas (primeiro boot do projeto)
+pip install -r requirements.txt
+
+# 3. Salvar novas bibliotecas sempre que instalar algo
+pip install nova-biblioteca
+pip freeze > requirements.txt
 ```
 
-O script vai:
-1. Ajustar as configurações de FUSE necessárias para o `rclone`
-2. Instalar `rclone`, `sshfs` e `nmap` se ainda não estiverem presentes
-3. Procurar automaticamente o celular na rede local (e pedir o IP manualmente se não achar)
-4. Confirmar a identidade do celular com você antes de confiar nele — na primeira vez ele mostra a "impressão digital" da conexão e pede sua confirmação; nas próximas vezes, se essa impressão mudar, ele avisa e para, em vez de conectar sem perguntar
-5. Buscar a chave SSH e o `rclone.conf` do celular
-6. Abrir o menu do `dar_boot.sh`
+---
 
-A partir daí, é só escolher a opção que faz sentido pro seu momento: montar tudo e abrir o VS Code, montar só o armazenamento, ou desmontar com segurança.
+## 🚀 Como inicializar no notebook
 
-Quando terminar de usar o notebook:
+Com o notebook em modo Live, abra o terminal e execute:
 
 ```bash
-bash limpar_tudo.sh
+curl -sL https://raw.githubusercontent.com/Santos788/hybrid-os/main/preparar_e_rodar.sh > /tmp/run.sh && bash /tmp/run.sh
 ```
 
-## Configuração inicial no celular (uma vez só)
+---
 
-Antes da primeira vez que você usar o HybridOS, o celular precisa estar preparado:
+## 👥 Como usar em seu próprio ambiente
 
-```bash
-# Dentro do Termux
-pkg install openssh
-sshd
-termux-setup-storage
+### No celular (Android)
 
-mkdir -p ~/storage/shared/hybrid-os
-cd ~/storage/shared/hybrid-os
-```
+1. Instale o Termux e o pacote OpenSSH: `pkg install openssh`
+2. Conceda acesso ao armazenamento: `termux-setup-storage`
+3. Crie a pasta do projeto: `mkdir -p /storage/emulated/0/hybrid-os`
+4. Gere um par de chaves SSH sem senha: `ssh-keygen -t rsa -b 2048 -f ~/.ssh/id_rsa -N ""`
+5. Autorize a chave localmente: `cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys`
+6. Faça backup da chave privada: `cp ~/.ssh/id_rsa /storage/emulated/0/hybrid-os/id_rsa_backup`
+7. Configure o Google Drive via Rclone, salvando o arquivo em `/storage/emulated/0/hybrid-os/rclone.conf`
+8. Inicie o servidor SSH: `sshd`
 
-Gere um par de chaves para o notebook confiar no celular (ou copie uma chave já existente do notebook para cá como `id_rsa_backup`), e adicione a chave pública correspondente ao `~/.ssh/authorized_keys` do Termux. Prepare também o seu `rclone.conf` (com a configuração do Google Drive, se for usar) e coloque ele nessa mesma pasta.
+### No notebook (Live CD Linux)
 
-Depois disso, o `preparar_e_rodar.sh` cuida do resto sozinho, toda vez que você usar um notebook novo.
+Execute o comando de inicialização listado na seção acima. O script cuida do pareamento de chaves, otimização gráfica e montagem, de forma totalmente automatizada.
 
-## Sobre segurança
+---
 
-Vale ser honesto aqui: esse projeto foi pensado pra uso pessoal, numa rede doméstica em que você confia. Ele conecta um notebook desconhecido (Live USB) ao seu celular via SSH, e isso tem implicações que valem a pena entender antes de usar em qualquer lugar:
+## 📋 Requisitos
 
-- A verificação de identidade do celular protege contra ataques de rede (como alguém se passando pelo seu celular), mas só funciona se você conferir a impressão digital na primeira conexão em vez de simplesmente aceitar
-- As credenciais (chave SSH, configuração do rclone) ficam apenas na RAM do notebook e são removidas pelo `limpar_tudo.sh` — mas isso só acontece se você lembrar de rodar esse script antes de desligar
-- Evite usar em redes públicas ou não confiáveis (Wi-Fi de aeroporto, cafeteria, etc.) — o tráfego SSH/SFTP é criptografado, mas a superfície de ataque de expor um servidor SSH na rede local ainda existe
+- Notebook capaz de bootar Linux Mint em modo Live (CD/USB)
+- Dispositivo Android com Termux instalado
+- Rede Wi-Fi compartilhada entre os dois dispositivos (ou ancoragem USB)
+- Conta Google Drive (opcional, para o mount virtual)
 
-Se for usar em notebooks que não são seus (laboratório, biblioteca), rode o `limpar_tudo.sh` religiosamente ao terminar.
+## ⚠️ Aviso
 
-## Problemas comuns
+Este projeto foi desenvolvido para uso pessoal, resolvendo um problema específico de persistência em ambientes Linux Live. Use por sua conta e risco, revise os scripts antes de executá-los e mantenha backups das suas chaves de acesso.
 
-**"Montou, mas a pasta está vazia"** — quase sempre significa que o `termux-setup-storage` não foi rodado no celular (ou a permissão de armazenamento não foi concedida). Rode o comando no Termux e tente montar de novo.
+## 🤝 Contribuindo
 
-**"Não consegui detectar o celular automaticamente"** — normal em redes com isolamento de dispositivos (algumas redes de trabalho ou Wi-Fi de operadora bloqueiam isso). Quando o script pedir, digite o IP do celular manualmente — você pode encontrá-lo em Configurações > Wi-Fi > detalhes da rede conectada, no Android.
+Sugestões, correções e melhorias são bem-vindas. Sinta-se à vontade para abrir uma *issue* ou enviar um *pull request*.
 
-**"A identidade do celular mudou desde a última vez"** — o script vai parar de propósito. Se você trocou de celular ou reinstalou o Termux, apague o arquivo `~/.ssh/known_hosts_hybridos` no notebook e conecte de novo. Se não fez nada disso, desconfie da rede em que você está.
+## 📄 Licença
 
-## Contribuindo
-
-Encontrou um bug, tem uma ideia de melhoria, ou quer adaptar isso pra outro cenário (iOS, outro gerenciador de arquivos remoto, etc.)? Abra uma issue ou mande um pull request. É um projeto pequeno e pessoal, mas toda contribuição ajuda.
-
-## Licença
-
-Adicione aqui a licença de sua preferência (MIT costuma ser uma boa escolha padrão para projetos assim).
+Distribuído sob a licença MIT. Veja o arquivo `LICENSE` para mais detalhes.
