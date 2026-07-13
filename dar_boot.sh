@@ -7,10 +7,13 @@ VERDE="\033[1;32m"
 AMARELO="\033[1;33m"
 VERMELHO="\033[1;31m"
 SEM_COR="\033[0m"
+# --- SUBSTITUA POR ESTE BLOCO (IP MANUAL) ---
 
-IP_ALVO=${IP_CELULAR:-"localhost"}
+IP_CELULAR_FIXO="192.168.33.235"
+
+IP_ALVO=${IP_CELULAR:-$IP_CELULAR_FIXO}
+
 USER_ALVO=${USER_TERMUX:-"com.termux"}
-
 # Mesmos caminhos usados no preparar_e_rodar.sh e no limpar_tudo.sh —
 # não mude aqui sem mudar nos outros dois, senão volta o bug da
 # "pasta fantasma".
