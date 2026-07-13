@@ -25,7 +25,7 @@ if [ -n "$IP_MAQUINA" ]; then
 fi
 
 # Se encontrar o IP via nmap, usa ele. Se falhar, assume o IP padrão de contingência.
-IP_FINAL="${IP_DESCOBERTO:-"192.168.100.127"}"
+IP_FINAL="${IP_DESCOBERTO:-"192.168.33.235"}"
 
 IP_ALVO=${IP_CELULAR:-$IP_FINAL}
 USER_ALVO=${USER_TERMUX:-"com.termux"}
