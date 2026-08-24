@@ -56,12 +56,9 @@ ssh-keyscan -p $PORT "$IP_CELULAR" > "$KNOWN_HOSTS_FILE" 2>/dev/null || true
 # 5. Função para montagem do Rclone SFTP
 mount_sftp() {
     echo "[+] Montando armazenamento do celular ($IP_CELULAR)..."
-    rclone mount :sftp:storage/shared/hybrid-os "$MOUNT_HYBRID" \
-        --sftp-host="$IP_CELULAR" \
-        --sftp-port="$PORT" \
-        --sftp-user="$USER_TERMUX" \
-        --sftp-key-file="$SSH_KEY" \
-        --sftp-known-hosts-file="$KNOWN_HOSTS_FILE" \
+    
+    # Sintaxe inline do rclone (passa o host e porta diretamente na conexão sftp)
+    rclone mount ":sftp,host=$IP_CELULAR,port=$PORT,user=$USER_TERMUX,key_file=$SSH_KEY,known_hosts_file=$KNOWN_HOSTS_FILE:storage/shared/hybrid-os" "$MOUNT_HYBRID" \
         --vfs-cache-mode full \
         --daemon
 
