@@ -48,8 +48,7 @@ Passo a Passo
     Clonar o repositório:
     Bash
 
-git clone [https://github.com/Santos788/hybrid-os.git](https://github.com/Santos788/hybrid-os.git)
-cd hybrid-os
+git clone https://github.com/Santos788/hybrid-os.git && cd hybrid-os
 
 Conceder permissões de execução aos scripts:
 Bash
