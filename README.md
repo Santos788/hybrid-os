@@ -1,6 +1,6 @@
 # 🚀 Hybrid_OS — Transient RAM Architecture & Distributed Storage
 
-Uma infraestrutura de ambiente de desenvolvimento portátil, de alto desempenho e voltada para segurança. O **Hybrid_OS** executa um ambiente de desenvolvimento completo diretamente na memória RAM (Linux Live-USB), estabelecendo ponte remota segura com um dispositivo Android (Termux) via SSH/Rclone para persistência distribuída de dados.
+Uma infraestrutura de ambiente de desenvolvimento portátil, de alto desempenho e voltada para segurança. O **Hybrid_OS** executa um ambiente de desenvolvimento completo diretamente na memória RAM (Linux Live-USB), estabelecendo uma ponte remota segura com um dispositivo Android (Termux) via SSH/Rclone para persistência distribuída de dados.
 
 ---
 
@@ -8,8 +8,8 @@ Uma infraestrutura de ambiente de desenvolvimento portátil, de alto desempenho 
 
 ```text
   ┌───────────────────────┐         SSH / Rclone         ┌─────────────────────────┐
-  │   Android / Termux    │ ◄──────────────────────────► │    Linux Live-USB       │
-  │ (Persistência / Dados) │  (Descoberta Automática /   │   (Execução em RAM)     │
+  │    Android / Termux   │ ◄──────────────────────────► │     Linux Live-USB      │
+  │ (Persistência / Dados) │  (Descoberta Automática /   │    (Execução em RAM)    │
   └───────────────────────┘     Verificação Rota)        └─────────────────────────┘
                                                                       │
                                                                       ▼
@@ -18,20 +18,20 @@ Uma infraestrutura de ambiente de desenvolvimento portátil, de alto desempenho 
                                                          │ Cleanup pós-execução    │
                                                          └─────────────────────────┘
 
-    Execução Transiente em RAM: Garante altíssima velocidade de leitura e escrita para o ambiente de desenvolvimento, minimizando rastros no sistema hospedeiro.
+    Execução Transiente em RAM: Garante altíssima velocidade de leitura/escrita para o ambiente de desenvolvimento, isolando a execução e eliminando rastros no sistema hospedeiro.
 
-    Ponte com Android via Termux: Montagem de volume remoto e sincronização transparente de arquivos utilizando rclone sobre túnel SSH seguro.
+    Ponte Android via Termux: Montagem de volume remoto e sincronização transparente de arquivos usando Rclone sobre um túnel SSH seguro na porta 8022.
 
-    DevSecOps & Limpeza em RAM: Rotina automatizada de encerramento que limpa credenciais, tokens e rastros da sessão armazenados em memória após a finalização do trabalho.
+    DevSecOps & Sanitização: Rotinas automatizadas para validação de chaves SSH do host e encerramento seguro com limpeza de tokens/credenciais da RAM.
 
 🛠️ Estrutura do Projeto
 Plaintext
 
 hybrid-os/
 ├── scripts/
-│   ├── boot.sh          # Descoberta de rede, validação SSH e montagem do storage
-│   ├── setup.sh         # Configuração de dependências, ambiente virtual e VS Code
-│   └── cleanup.sh       # Desmontagem de volumes e limpeza segura de dados/credenciais em RAM
+│   ├── setup.sh         # Instalação e configuração de dependências no Live-USB
+│   ├── boot.sh          # Descoberta de IP, validação SSH, menu e montagem via Rclone
+│   └── cleanup.sh       # Desmontagem de volumes e limpeza de dados/credenciais em RAM
 ├── .gitignore
 ├── LICENSE
 └── README.md
@@ -39,54 +39,56 @@ hybrid-os/
 🚀 Como Executar
 Pré-requisitos
 
-    Dispositivo Android com Termux e servidor SSH/Rclone configurados.
+    Dispositivo Android com Termux e o servidor SSH ativo (sshd).
 
-    Sistema Linux Live-USB rodando com acesso à rede local.
+    Computador rodando Linux Mint Live-USB conectado na mesma rede Wi-Fi.
 
-Passo a Passo
+Boot Rápido (Comando Único)
 
-    Clonar o repositório:
+Devido às restrições de execução (noexec) nativas de partições de pendrives em ambientes Live, o projeto deve ser espelhado na memória RAM (/tmp) para execução imediata.
+
+Execute o comando unificado abaixo no terminal:
+Bash
+
+cd ~/hybrid-os && git pull && rm -rf /tmp/hybrid-os-app && cp -r ~/hybrid-os /tmp/hybrid-os-app && cd /tmp/hybrid-os-app && bash scripts/setup.sh && bash scripts/boot.sh
+
+Passo a Passo Manual
+
+Se preferir executar etapa por etapa:
+
+    Atualizar o repositório local no pendrive:
     Bash
 
-git clone https://github.com/Santos788/hybrid-os.git && cd hybrid-os
+cd ~/hybrid-os && git pull
 
-Conceder permissões de execução aos scripts:
+Copiar o ambiente para a memória RAM:
 Bash
 
-chmod +x scripts/*.sh
+rm -rf /tmp/hybrid-os-app && cp -r ~/hybrid-os /tmp/hybrid-os-app && cd /tmp/hybrid-os-app
 
-Iniciar a ponte e montar o ambiente:
+Preparar as dependências (Setup):
 Bash
 
-./scripts/boot.sh
+bash scripts/setup.sh
 
-Preparar e carregar o ambiente de desenvolvimento:
+Iniciar a ponte e o VS Code (Boot):
 Bash
 
-./scripts/setup.sh
+bash scripts/boot.sh
 
-Encerrar a sessão com limpeza de credenciais:
+Encerrar a sessão e limpar a RAM (Cleanup):
 Bash
 
-    ./scripts/cleanup.sh
+    bash scripts/cleanup.sh
 
 🛡️ Segurança (AppSec & Operacional)
 
-    Sanitização de Sessão: Nenhum dado sensível ou chave de acesso permanece no disco rígido local.
+    Sanitização de Sessão: Nenhum dado sensível ou chave de acesso permanece gravado no disco rígido local após o desligamento.
 
-    Ambiente Isolado: Uso de venv (virtualenv) em Python para evitar conflitos com o sistema base e isolar dependências.
+    Ambiente Isolado: Execução em RAM via diretórios temporários controlados.
 
-    Validação de Identidade SSH: Verificação das assinaturas dos hosts antes de autenticar o volume montado via Rclone.
-```` 
+    Validação de Identidade SSH: Checagem dinâmica das assinaturas de host (known_hosts) antes de autorizar a montagem do volume via Rclone SFTP.
+
 👨‍💻 Autor
 
 Desenvolvido por Clayton Santos
-
-<p align="left">
-  <a href="mailto:claytondev43@gmail.com" title="Gmail">
-    <img src="https://img.shields.io/badge/-Gmail-FF0000?style=flat-square&labelColor=FF0000&logo=gmail&logoColor=white" alt="Gmail"/>
-  </a>
-
-  <a href="https://www.linkedin.com/in/clayton-santos-7888733b0" title="LinkedIn">
-    <img src="https://img.shields.io/badge/-LinkedIn-0e76a8?style=flat-square&logo=linkedin&logoColor=white" alt="LinkedIn"/>
-  </a>
