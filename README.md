@@ -88,7 +88,16 @@ Bash
     Ambiente Isolado: Execução em RAM via diretórios temporários controlados.
 
     Validação de Identidade SSH: Checagem dinâmica das assinaturas de host (known_hosts) antes de autorizar a montagem do volume via Rclone SFTP.
-
+```
 👨‍💻 Autor
 
 Desenvolvido por Clayton Santos
+
+<p align="left">
+  <a href="mailto:claytondev43@gmail.com" title="Gmail">
+    <img src="https://img.shields.io/badge/-Gmail-FF0000?style=flat-square&labelColor=FF0000&logo=gmail&logoColor=white" alt="Gmail"/>
+  </a>
+
+  <a href="https://www.linkedin.com/in/clayton-santos-7888733b0" title="LinkedIn">
+    <img src="https://img.shields.io/badge/-LinkedIn-0e76a8?style=flat-square&logo=linkedin&logoColor=white" alt="LinkedIn"/>
+  </a>
