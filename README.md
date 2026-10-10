@@ -1,103 +1,120 @@
-# 🚀 Hybrid_OS — Transient RAM Architecture & Distributed Storage
+# Hybrid_OS
 
-Uma infraestrutura de ambiente de desenvolvimento portátil, de alto desempenho e voltada para segurança. O **Hybrid_OS** executa um ambiente de desenvolvimento completo diretamente na memória RAM (Linux Live-USB), estabelecendo uma ponte remota segura com um dispositivo Android (Termux) via SSH/Rclone para persistência distribuída de dados.
+A portable development environment that runs entirely in **RAM** from a Linux Live-USB and persists projects and settings on an **Android device (Termux)** over SSH and Rclone, leaving no traces on the host computer.
+
+[Português](README.pt-BR.md) · **English**
+
+![Bash](https://img.shields.io/badge/Bash-4EAA25?style=flat-square&logo=gnubash&logoColor=white)
+![Linux](https://img.shields.io/badge/Linux-FCC624?style=flat-square&logo=linux&logoColor=black)
+![SSH](https://img.shields.io/badge/SSH-secure-informational?style=flat-square)
+![Rclone](https://img.shields.io/badge/Rclone-SFTP-3F79AD?style=flat-square)
 
 ---
 
-## 🏗️ Arquitetura & Conceito
+## Overview
+
+| Feature | Description |
+|---|---|
+| **RAM execution** | The project is copied to `/tmp` and runs in memory, giving fast read/write speeds and isolation from the host system. |
+| **Remote persistence** | The Android volume is mounted via Rclone (SFTP) over an SSH tunnel on port `8022`. |
+| **Automatic discovery** | The script locates the Android device on the network and validates the connection before mounting. |
+| **Session cleanup** | Unmounts volumes and removes tokens and credentials from RAM on exit. |
+
+## Architecture
 
 ```text
-  ┌───────────────────────┐         SSH / Rclone         ┌─────────────────────────┐
-  │    Android / Termux   │ ◄──────────────────────────► │     Linux Live-USB      │
-  │ (Persistência / Dados) │  (Descoberta Automática /   │    (Execução em RAM)    │
-  └───────────────────────┘     Verificação Rota)        └─────────────────────────┘
-                                                                      │
-                                                                      ▼
-                                                         ┌─────────────────────────┐
-                                                         │ VS Code / Dev Tools /   │
-                                                         │ Cleanup pós-execução    │
-                                                         └─────────────────────────┘
+ ┌──────────────────────┐      SSH / Rclone (SFTP)      ┌──────────────────────┐
+ │   Android / Termux   │ ◄───────────────────────────► │    Linux Live-USB    │
+ │    (persistence)     │      port 8022 · same LAN     │    (RAM execution)   │
+ └──────────────────────┘                               └──────────┬───────────┘
+                                                                   │
+                                                                   ▼
+                                                        ┌──────────────────────┐
+                                                        │ VS Code / Dev Tools  │
+                                                        │ Post-session cleanup │
+                                                        └──────────────────────┘
+```
 
-    Execução Transiente em RAM: Garante altíssima velocidade de leitura/escrita para o ambiente de desenvolvimento, isolando a execução e eliminando rastros no sistema hospedeiro.
+## Project structure
 
-    Ponte Android via Termux: Montagem de volume remoto e sincronização transparente de arquivos usando Rclone sobre um túnel SSH seguro na porta 8022.
-
-    DevSecOps & Sanitização: Rotinas automatizadas para validação de chaves SSH do host e encerramento seguro com limpeza de tokens/credenciais da RAM.
-
-🛠️ Estrutura do Projeto
-Plaintext
-
+```text
 hybrid-os/
 ├── scripts/
-│   ├── setup.sh         # Instalação e configuração de dependências no Live-USB
-│   ├── boot.sh          # Descoberta de IP, validação SSH, menu e montagem via Rclone
-│   └── cleanup.sh       # Desmontagem de volumes e limpeza de dados/credenciais em RAM
+│   ├── setup.sh      # Installs and configures dependencies on the Live-USB
+│   ├── boot.sh       # Discovers the IP, validates SSH, shows the menu, mounts via Rclone
+│   └── cleanup.sh    # Unmounts volumes and wipes data and credentials from RAM
 ├── .gitignore
 ├── LICENSE
 └── README.md
-
-🚀 Como Executar
-Pré-requisitos
-
-    Dispositivo Android com Termux e o servidor SSH ativo (sshd).
-
-    Computador rodando Linux Mint Live-USB conectado na mesma rede Wi-Fi.
-
-Boot Rápido (Comando Único)
-
-Devido às restrições de execução (noexec) nativas de partições de pendrives em ambientes Live, o projeto deve ser espelhado na memória RAM (/tmp) para execução imediata.
-
-Execute o comando unificado abaixo no terminal:
-Bash
-
-cd ~/hybrid-os && git pull && rm -rf /tmp/hybrid-os-app && cp -r ~/hybrid-os /tmp/hybrid-os-app && cd /tmp/hybrid-os-app && bash scripts/setup.sh && bash scripts/boot.sh
-
-Passo a Passo Manual
-
-Se preferir executar etapa por etapa:
-
-    Atualizar o repositório local no pendrive:
-    Bash
-
-cd ~/hybrid-os && git pull
-
-Copiar o ambiente para a memória RAM:
-Bash
-
-rm -rf /tmp/hybrid-os-app && cp -r ~/hybrid-os /tmp/hybrid-os-app && cd /tmp/hybrid-os-app
-
-Preparar as dependências (Setup):
-Bash
-
-bash scripts/setup.sh
-
-Iniciar a ponte e o VS Code (Boot):
-Bash
-
-bash scripts/boot.sh
-
-Encerrar a sessão e limpar a RAM (Cleanup):
-Bash
-
-    bash scripts/cleanup.sh
-
-🛡️ Segurança (AppSec & Operacional)
-
-    Sanitização de Sessão: Nenhum dado sensível ou chave de acesso permanece gravado no disco rígido local após o desligamento.
-
-    Ambiente Isolado: Execução em RAM via diretórios temporários controlados.
-
-    Validação de Identidade SSH: Checagem dinâmica das assinaturas de host (known_hosts) antes de autorizar a montagem do volume via Rclone SFTP.
 ```
-👨‍💻 Autor
 
-Desenvolvido por Clayton Santos
+## Requirements
 
-<p align="left">
-  <a href="mailto:claytondev43@gmail.com" title="Gmail">
-    <img src="https://img.shields.io/badge/-Gmail-FF0000?style=flat-square&labelColor=FF0000&logo=gmail&logoColor=white" alt="Gmail"/>
-  </a>
+- Android device with **Termux** and the SSH server running (`sshd`)
+- Computer booted from a **Linux Mint Live-USB**, on the same Wi-Fi network as the Android device
 
-  <a href="https://www.linkedin.com/in/clayton-santos-7888733b0" title="LinkedIn">
-    <img src="https://img.shields.io/badge/-LinkedIn-0e76a8?style=flat-square&logo=linkedin&logoColor=white" alt="LinkedIn"/>
-  </a>
+## Usage
+
+USB drive partitions in Live environments are usually mounted with `noexec`. For that reason, the project is copied to RAM (`/tmp`) before it is executed.
+
+### One-liner
+
+```bash
+cd ~/hybrid-os && git pull \
+  && rm -rf /tmp/hybrid-os-app \
+  && cp -r ~/hybrid-os /tmp/hybrid-os-app \
+  && cd /tmp/hybrid-os-app \
+  && bash scripts/setup.sh \
+  && bash scripts/boot.sh
+```
+
+### Step by step
+
+**1. Update the repository**
+
+```bash
+cd ~/hybrid-os && git pull
+```
+
+**2. Copy the project to RAM**
+
+```bash
+rm -rf /tmp/hybrid-os-app && cp -r ~/hybrid-os /tmp/hybrid-os-app && cd /tmp/hybrid-os-app
+```
+
+**3. Install dependencies**
+
+```bash
+bash scripts/setup.sh
+```
+
+**4. Start the bridge and VS Code**
+
+```bash
+bash scripts/boot.sh
+```
+
+**5. End the session and clean up RAM**
+
+```bash
+bash scripts/cleanup.sh
+```
+
+## Security
+
+- **No local traces:** no sensitive data or access keys remain on the host computer's disk after shutdown.
+- **Isolated environment:** runs in RAM, inside controlled temporary directories.
+- **SSH identity validation:** host signatures (`known_hosts`) are checked before the volume is allowed to mount via Rclone SFTP.
+- **Session sanitization:** `cleanup.sh` removes tokens and credentials from memory.
+
+## Author
+
+**Clayton Santos** · Backend Developer | Python | FastAPI | AppSec
+
+[![Gmail](https://img.shields.io/badge/Gmail-D14836?style=flat-square&logo=gmail&logoColor=white)](mailto:claytondev43@gmail.com)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0A66C2?style=flat-square&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/claytonsantos-backend)
+[![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat-square&logo=github&logoColor=white)](https://github.com/Santos788)
+
+## License
+
+Distributed under the license described in the [LICENSE](LICENSE) file.
