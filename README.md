@@ -2,8 +2,6 @@
 
 A portable development environment that runs entirely in **RAM** from a Linux Live-USB and persists projects and settings on an **Android device (Termux)** over SSH and Rclone, leaving no traces on the host computer.
 
-[Português](README.pt-BR.md) · **English**
-
 ![Bash](https://img.shields.io/badge/Bash-4EAA25?style=flat-square&logo=gnubash&logoColor=white)
 ![Linux](https://img.shields.io/badge/Linux-FCC624?style=flat-square&logo=linux&logoColor=black)
 ![SSH](https://img.shields.io/badge/SSH-secure-informational?style=flat-square)
